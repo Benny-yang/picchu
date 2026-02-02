@@ -1,0 +1,376 @@
+basePath: /api/v1
+definitions:
+  handler.LoginInput:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handler.RegisterInput:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  model.Post:
+    properties:
+      aspectRatio:
+        type: number
+      author:
+        allOf:
+        - $ref: '#/definitions/model.User'
+        description: Relationships
+      createdAt:
+        type: string
+      id:
+        type: integer
+      imageUrl:
+        type: string
+      title:
+        type: string
+      updatedAt:
+        type: string
+      userId:
+        type: integer
+    type: object
+  model.User:
+    properties:
+      createdAt:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      updatedAt:
+        type: string
+      userName:
+        type: string
+    type: object
+  model.UserProfile:
+    properties:
+      avatar:
+        type: string
+      bio:
+        type: string
+      city:
+        type: string
+      createdAt:
+        type: string
+      gender:
+        type: string
+      id:
+        type: integer
+      isModel:
+        type: boolean
+      isPhotographer:
+        type: boolean
+      phone:
+        type: string
+      updatedAt:
+        type: string
+      userId:
+        type: integer
+      username:
+        type: string
+    type: object
+  response.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+  service.Metadata:
+    properties:
+      has_more:
+        type: boolean
+      next_cursor:
+        type: string
+      seed:
+        type: integer
+    type: object
+  service.UpdateProfileInput:
+    properties:
+      avatarBase64:
+        type: string
+      bio:
+        type: string
+      city:
+        type: string
+      gender:
+        type: string
+      isModel:
+        type: boolean
+      isPhotographer:
+        type: boolean
+      phone:
+        type: string
+      username:
+        type: string
+    type: object
+  service.WallResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.Post'
+        type: array
+      metadata:
+        $ref: '#/definitions/service.Metadata'
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Dating App Backend API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Azure Magnetar API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user with email and password
+      parameters:
+      - description: Login Input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Login user
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account with email and password
+      parameters:
+      - description: Register Input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RegisterInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Register a new user
+      tags:
+      - auth
+  /posts/wall:
+    get:
+      consumes:
+      - application/json
+      description: Get posts for trending or following wall with random seed cursor
+        pagination
+      parameters:
+      - description: 'Filter type: trending (default) or following'
+        in: query
+        name: type
+        type: string
+      - description: Random seed for repeatable paging. If not provided, a new one
+          is generated.
+        in: query
+        name: seed
+        type: integer
+      - description: Pagination cursor (base64 encoded offset)
+        in: query
+        name: cursor
+        type: string
+      - description: Limit per page (default 20)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.WallResponse'
+      summary: Get Works Wall Posts
+      tags:
+      - posts
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.User'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: List all users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Create a user directly (Admin)
+      parameters:
+      - description: User Data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/model.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Create User (Admin)
+      tags:
+      - users
+  /users/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get user details by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Get User by ID
+      tags:
+      - users
+  /users/{id}/profile:
+    put:
+      consumes:
+      - application/json
+      description: Update detailed profile information
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Profile Data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateProfileInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.UserProfile'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Update User Profile
+      tags:
+      - users
+swagger: "2.0"
