@@ -1,27 +1,29 @@
 package service
 
 import (
-	"errors"
-
-	"azure-magnetar/internal/model"
-	"azure-magnetar/internal/repository"
-	"azure-magnetar/pkg/utils"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
+
+	"azure-magnetar/internal/model"
+	"azure-magnetar/internal/repository"
+	"azure-magnetar/pkg/utils"
 )
 
+// UserService defines the interface for user-related business logic.
 type UserService interface {
 	Register(email, password string) error
 	Login(email, password string) (*model.User, error)
-	CreateUser(user *model.User) error
 	GetUser(id uint) (*model.User, error)
+	GetUserWithProfile(id uint) (*UserProfileResponse, error)
 	ListUsers() ([]model.User, error)
 	UpdateProfile(userID uint, input UpdateProfileInput) (*model.UserProfile, error)
 }
 
+// UpdateProfileInput represents the data for profile updates.
 type UpdateProfileInput struct {
 	Username       string `json:"username"`
 	AvatarBase64   string `json:"avatarBase64"`
@@ -33,27 +35,41 @@ type UpdateProfileInput struct {
 	Bio            string `json:"bio"`
 }
 
-type userService struct {
-	repo repository.UserRepository
+// UserProfileResponse combines user, profile, and stats for API response.
+type UserProfileResponse struct {
+	ID             uint               `json:"id"`
+	Email          string             `json:"email"`
+	Username       string             `json:"username"`
+	Profile        *model.UserProfile `json:"profile"`
+	FollowerCount  int64              `json:"followerCount"`
+	FollowingCount int64              `json:"followingCount"`
 }
 
-func NewUserService(repo repository.UserRepository) UserService {
-	return &userService{repo: repo}
+type userService struct {
+	repo       repository.UserRepository
+	followRepo repository.FollowRepository
+}
+
+// NewUserService creates a new UserService.
+func NewUserService(repo repository.UserRepository, followRepo repository.FollowRepository) UserService {
+	return &userService{
+		repo:       repo,
+		followRepo: followRepo,
+	}
 }
 
 func (s *userService) Register(email, password string) error {
-	// Check if email already exists
 	if _, err := s.repo.GetByEmail(email); err == nil {
-		return errors.New("此emai已註冊")
+		return errors.New("此 email 已註冊")
 	}
 
 	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	user := &model.User{
-		UserName: email, // Default username to email
+		UserName: email,
 		Email:    email,
 		Password: hashedPassword,
 	}
@@ -74,12 +90,29 @@ func (s *userService) Login(email, password string) (*model.User, error) {
 	return user, nil
 }
 
-func (s *userService) CreateUser(user *model.User) error {
-	return s.repo.Create(user)
-}
-
 func (s *userService) GetUser(id uint) (*model.User, error) {
 	return s.repo.GetByID(id)
+}
+
+func (s *userService) GetUserWithProfile(id uint) (*UserProfileResponse, error) {
+	user, err := s.repo.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, _ := s.repo.GetProfileByUserID(id)
+
+	followerCount, _ := s.followRepo.CountFollowers(id)
+	followingCount, _ := s.followRepo.CountFollowing(id)
+
+	return &UserProfileResponse{
+		ID:             user.ID,
+		Email:          user.Email,
+		Username:       user.UserName,
+		Profile:        profile,
+		FollowerCount:  followerCount,
+		FollowingCount: followingCount,
+	}, nil
 }
 
 func (s *userService) ListUsers() ([]model.User, error) {
@@ -87,60 +120,40 @@ func (s *userService) ListUsers() ([]model.User, error) {
 }
 
 func (s *userService) UpdateProfile(userID uint, input UpdateProfileInput) (*model.UserProfile, error) {
-	// 1. Validate Roles
 	if !input.IsPhotographer && !input.IsModel {
 		return nil, errors.New("at least one role (photographer or model) must be selected")
 	}
 
-	// 2. Validate Gender
 	if input.Gender == "" {
 		return nil, errors.New("gender is required")
 	}
 
-	// 3. Get User and Profile
 	user, err := s.repo.GetByID(userID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
 	profile, err := s.repo.GetProfileByUserID(userID)
 	if err != nil {
-		// Attempt to create if not exists
 		profile = &model.UserProfile{UserID: userID}
-		// If error is strictly "record not found" (depending on GORM config), logic might vary.
-		// Assuming we proceed with profile struct.
 	}
 
-	// 4. Update Avatar if Base64 provided
 	if input.AvatarBase64 != "" {
-		// Define path
-		fileName := fmt.Sprintf("avatar_%d_%d.jpg", userID, time.Now().Unix())
-		filePath := filepath.Join("uploads", "avatars", fileName)
-
-		// Decode
-		data, err := base64.StdEncoding.DecodeString(input.AvatarBase64)
+		avatarURL, err := saveAvatarFromBase64(userID, input.AvatarBase64)
 		if err != nil {
-			return nil, errors.New("invalid base64 avatar")
+			return nil, fmt.Errorf("failed to save avatar: %w", err)
 		}
-
-		// Save to file
-		if err := os.WriteFile(filePath, data, 0644); err != nil {
-			return nil, err
-		}
-
-		profile.Avatar = filePath
+		profile.AvatarURL = avatarURL
 	}
 
-	// 5. Update User Username (Display ID) and Profile Username
 	if input.Username != "" {
 		user.UserName = input.Username
-		profile.Username = input.Username // Update profile username as well
+		profile.Username = input.Username
 		if err := s.repo.UpdateUser(user); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to update username: %w", err)
 		}
 	}
 
-	// 6. Update Profile Fields
 	profile.City = input.City
 	profile.Gender = input.Gender
 	profile.Phone = input.Phone
@@ -149,8 +162,31 @@ func (s *userService) UpdateProfile(userID uint, input UpdateProfileInput) (*mod
 	profile.Bio = input.Bio
 
 	if err := s.repo.UpdateProfile(profile); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to update profile: %w", err)
 	}
 
 	return profile, nil
+}
+
+// saveAvatarFromBase64 decodes base64 image data and saves it to disk.
+func saveAvatarFromBase64(userID uint, base64Data string) (string, error) {
+	fileName := fmt.Sprintf("avatar_%d_%d.jpg", userID, time.Now().Unix())
+	filePath := filepath.Join("uploads", "avatars", fileName)
+
+	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
+		return "", fmt.Errorf("failed to create avatar directory: %w", err)
+	}
+
+	data, err := base64.StdEncoding.DecodeString(base64Data)
+	if err != nil {
+		return "", errors.New("invalid base64 avatar data")
+	}
+
+	if err := os.WriteFile(filePath, data, 0644); err != nil {
+		return "", fmt.Errorf("failed to save avatar: %w", err)
+	}
+
+	// Return full URL (assuming backend is at localhost:8080)
+	// In production, this should be configurable
+	return fmt.Sprintf("http://localhost:8080/uploads/avatars/%s", fileName), nil
 }

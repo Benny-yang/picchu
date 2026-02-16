@@ -62,6 +62,9 @@ func (r *userRepository) GetProfileByUserID(userID uint) (*model.UserProfile, er
 }
 
 func (r *userRepository) UpdateProfile(profile *model.UserProfile) error {
+	if profile.ID == 0 {
+		return r.db.Create(profile).Error
+	}
 	return r.db.Save(profile).Error
 }
 

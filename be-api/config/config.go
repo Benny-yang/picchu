@@ -5,6 +5,7 @@ import "os"
 type Config struct {
 	DataSourceName string
 	Port           string
+	JWTSecret      string
 }
 
 func LoadConfig() *Config {
@@ -16,8 +17,14 @@ func LoadConfig() *Config {
 		port = "8080"
 	}
 
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "azure-magnetar-dev-secret-key"
+	}
+
 	return &Config{
 		DataSourceName: dsn,
 		Port:           port,
+		JWTSecret:      jwtSecret,
 	}
 }

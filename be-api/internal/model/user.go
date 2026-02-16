@@ -4,12 +4,16 @@ import "time"
 
 // User struct definition
 type User struct {
-	ID        uint      `gorm:"primaryKey" json:"id"`
-	UserName  string    `gorm:"column:user_name;size:255;not null" json:"userName"`
-	Email     string    `gorm:"column:email;size:255;not null;unique" json:"email"`
-	Password  string    `gorm:"column:password;size:255;not null" json:"-"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID             uint        `gorm:"primaryKey" json:"id"`
+	UserName       string      `gorm:"column:user_name;size:255;not null" json:"username"`
+	Email          string      `gorm:"column:email;size:255;not null;uniqueIndex" json:"email"`
+	Password       string      `gorm:"column:password;size:255;not null" json:"-"`
+	Phone          string      `gorm:"column:phone;size:50" json:"phone"`
+	IsPhotographer bool        `gorm:"-" json:"isPhotographer"` // Derived from Profile, not persisted on User table
+	Profile        UserProfile `gorm:"foreignKey:UserID" json:"profile"`
+	AverageRating  float64     `gorm:"-" json:"averageRating"`
+	CreatedAt      time.Time   `json:"createdAt"`
+	UpdatedAt      time.Time   `json:"updatedAt"`
 }
 
 // TableName overrides the table name used by User to `users`

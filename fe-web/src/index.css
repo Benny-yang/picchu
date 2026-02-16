@@ -3,6 +3,42 @@
 @theme {
   --animate-fade-in-up: fade-in-up 0.5s ease-out forwards;
 
+  /* Color Palette - Neutrals */
+  --color-grey-black: #191919;
+  --color-grey-1: #666666;
+  --color-grey-2: #B3B3B3;
+  --color-grey-3: #E6E6E6;
+  --color-grey-4: #F7F7F7;
+  --color-white: #FFFFFF;
+
+  /* Color Palette - Brand */
+  --color-secondary-blue: #009BCD;
+  --color-secondary-blue-dark: #0087B2;
+  --color-secondary-orange: #FFAF3C;
+
+  /* Color Palette - Feedback */
+  --color-alert-default: #E52E2E;
+  --color-alert-dark: #C81919;
+
+  /* Typography - Font Family */
+  --font-sans: 'Noto Sans', 'Noto Sans TC', 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Typography - Headings (Line Heights inferred) */
+  --text-h1: 40px;
+  --text-h1--line-height: 1.25;
+  --text-h3: 28px;
+  --text-h3--line-height: 1.4;
+  --text-h4: 24px;
+  --text-h4--line-height: 1.4;
+  --text-h5: 20px;
+  --text-h5--line-height: 1.4;
+
+  /* Typography - Body */
+  --text-body1: 16px; 
+  --text-body1--line-height: 1.5;
+  --text-body2: 14px;
+  --text-body2--line-height: 1.5;
+
   @keyframes fade-in-up {
     from {
       opacity: 0;

@@ -5,17 +5,17 @@ Based on the current Frontend implementation (`fe-web`), the following APIs and 
 **Logic:**
 - Handle registration with Email/Password.
 - Handle Login (JWT expected).
-- SMS Verification flow (Mocked in BE for now, reserve AWS SNS for future).
+- ~~SMS Verification flow~~ (**已移除** — 前端已移除此流程)
 - Profile completion (Avatar, Roles, Bio).
-- Forgot Password flow (Mocked in BE for now, reserve AWS SES for future).
+- ~~Forgot Password flow~~ (**暫緩** — 等待通知信廠商串接後再實作)
 
 **API Endpoints:**
 - `POST /auth/register`: Register new user (email, password).
 - `POST /auth/login`: Login (returns JWT + User Basic Info).
-- `POST /auth/verify-sms`: Verify phone number with code.
-- `POST /auth/send-sms`: Send SMS verification code to phone.
-- `POST /auth/forgot-password`: Request password reset (sends email/mock).
-- `POST /auth/reset-password`: Reset password with token.
+- ~~`POST /auth/verify-sms`~~: (**已移除**)
+- ~~`POST /auth/send-sms`~~: (**已移除**)
+- ~~`POST /auth/forgot-password`~~: (**暫緩** — 等待廠商串接)
+- ~~`POST /auth/reset-password`~~: (**暫緩** — 等待廠商串接)
 - `GET /users/me`: Get current user profile.
 - `PUT /users/me`: Update profile (Avatar, Bio, Roles, Gender, Phone).
 

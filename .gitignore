@@ -3,3 +3,6 @@
 **/.idea
 **/.vscode
 *.log
+*.db
+uploads/
+vite.out

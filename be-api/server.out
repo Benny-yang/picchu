@@ -1,0 +1,19 @@
+Database connected successfully
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] POST   /api/v1/auth/register     --> azure-magnetar/internal/handler.(*UserHandler).Register-fm (4 handlers)
+[GIN-debug] POST   /api/v1/auth/login        --> azure-magnetar/internal/handler.(*UserHandler).Login-fm (4 handlers)
+[GIN-debug] POST   /api/v1/users             --> azure-magnetar/internal/handler.(*UserHandler).CreateUser-fm (4 handlers)
+[GIN-debug] GET    /api/v1/users             --> azure-magnetar/internal/handler.(*UserHandler).ListUsers-fm (4 handlers)
+[GIN-debug] GET    /api/v1/users/:id         --> azure-magnetar/internal/handler.(*UserHandler).GetUser-fm (4 handlers)
+[GIN-debug] PUT    /api/v1/users/:id/profile --> azure-magnetar/internal/handler.(*UserHandler).UpdateProfile-fm (4 handlers)
+[GIN-debug] GET    /api/v1/posts/wall        --> azure-magnetar/internal/handler.(*PostHandler).GetWall-fm (4 handlers)
+[GIN-debug] GET    /swagger/*any             --> github.com/swaggo/gin-swagger.CustomWrapHandler.func1 (4 handlers)
+Server starting on port 8080
+[GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
+Please check https://github.com/gin-gonic/gin/blob/master/docs/doc.md#dont-trust-all-proxies for details.
+[GIN-debug] Listening and serving HTTP on :8080

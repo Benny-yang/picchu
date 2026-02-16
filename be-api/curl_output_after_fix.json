@@ -1,0 +1,28 @@
+Note: Unnecessary use of -X or --request, POST is already inferred.
+* Host localhost:8080 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:8080...
+* Connected to localhost (::1) port 8080
+> POST /api/v1/activities HTTP/1.1
+> Host: localhost:8080
+> User-Agent: curl/8.7.1
+> Accept: */*
+> Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQsImV4cCI6MTc3MTI0MTM3MSwiaWF0IjoxNzcxMTU0OTcxfQ.AvBRTASI1ycXdGC-9fAjpgec7QNHlFtYdbvZ0XJFKjI
+> Content-Type: application/json
+> Content-Length: 166
+> 
+} [166 bytes data]
+* upload completely sent off: 166 bytes
+< HTTP/1.1 200 OK
+< Content-Type: application/json; charset=utf-8
+< Vary: Origin
+< Date: Sun, 15 Feb 2026 11:29:31 GMT
+< Content-Length: 769
+< 
+{ [769 bytes data]
+100   935  100   769  100   166   265k  58719 --:--:-- --:--:-- --:--:--  456k
+* Connection #0 to host localhost left intact
+{"code":200,"message":"Success","data":{"id":2,"hostId":4,"title":"Test Roles After Fix","description":"Desc","location":"Loc","eventTime":"2026-12-31T12:00:00Z","maxParticipants":5,"currentParticipants":0,"status":"open","images":null,"tags":"","roles":["model","photographer"],"createdAt":"2026-02-15T19:29:31.809+08:00","updatedAt":"2026-02-15T19:29:31.809+08:00","host":{"id":0,"username":"","email":"","phone":"","isPhotographer":false,"profile":{"id":0,"userId":0,"displayName":"","username":"","avatarUrl":"","bio":"","roles":"","gender":"","city":"","phone":"","isPhotographer":false,"isModel":false,"createdAt":"0001-01-01T00:00:00Z","updatedAt":"0001-01-01T00:00:00Z"},"averageRating":0,"createdAt":"0001-01-01T00:00:00Z","updatedAt":"0001-01-01T00:00:00Z"}}}

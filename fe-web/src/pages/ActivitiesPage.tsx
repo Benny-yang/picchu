@@ -1,0 +1,125 @@
+import React, { useState, useEffect } from 'react';
+import MainHeader from '../components/layout/MainHeader';
+import ActivityDetailModal from '../components/activities/ActivityDetailModal';
+import ActivityCard from '../components/activities/ActivityCard';
+import EmptyState from '../components/common/EmptyState';
+import { activityService } from '../services/activityService';
+import { authService } from '../services/authService';
+
+interface ActivitiesPageProps {
+    currentUser?: any;
+}
+
+const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ currentUser }) => {
+    const [activeTab, setActiveTab] = useState("熱門");
+    const [selectedActivity, setSelectedActivity] = useState<any>(null);
+    const [activities, setActivities] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const categories = ["熱門", "我的"];
+
+    const fetchActivities = async () => {
+        setIsLoading(true);
+        try {
+            if (activeTab === '我的') {
+                if (currentUser) {
+                    const userId = currentUser.id || currentUser.ID;
+                    const result = await authService.getUserActivities(userId);
+                    setActivities(result);
+                } else {
+                    setActivities([]);
+                }
+            } else {
+                const result = await activityService.list();
+                setActivities(result.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch activities:', error);
+            setActivities([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchActivities();
+    }, [activeTab]);
+
+    // Check for URL param 'id' to open specific activity
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const activityId = params.get('id');
+        if (activityId) {
+            activityService.getById(Number(activityId)).then(data => {
+                if (data) {
+                    setSelectedActivity(data);
+                }
+            }).catch(err => console.error("Failed to load activity from URL", err));
+        }
+    }, []);
+
+    return (
+        <div className="w-full min-h-screen bg-gray-50 flex flex-col">
+            <MainHeader activePage="activities" currentUser={currentUser} />
+
+            <div className="max-w-[1200px] mx-auto w-full px-4 pt-8">
+                {/* Categories Tabs */}
+                <div className="flex justify-center border-b border-gray-200 mb-8">
+                    {categories.map((cat) => (
+                        <div
+                            key={cat}
+                            onClick={() => setActiveTab(cat)}
+                            className={`px-8 py-4 text-sm font-bold cursor-pointer relative ${activeTab === cat ? 'text-[#009bcd]' : 'text-gray-500 hover:text-gray-800'
+                                }`}
+                        >
+                            {cat}
+                            {activeTab === cat && (
+                                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#009bcd]" />
+                            )}
+                        </div>
+                    ))}
+                </div>
+
+                {/* Grid */}
+                {isLoading ? (
+                    <div className="flex justify-center items-center py-20">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#009bcd]" />
+                    </div>
+                ) : activities.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
+                        {activities.map((activity) => (
+                            <ActivityCard
+                                key={activity.id || activity.ID}
+                                activity={{
+                                    ...activity,
+                                    image: activity.coverUrl || activity.images?.[0] || '',
+                                    userAvatar: activity.host?.avatarUrl || '',
+                                    tags: activity.tags?.split(',') || [],
+                                    date: activity.eventTime?.replace('T', ' ').slice(0, 16) || '',
+                                }}
+                                onClick={() => setSelectedActivity(activity)}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <EmptyState
+                        message="目前沒有活動"
+                        description="目前還沒有任何活動，您可以成為第一個舉辦活動的人！"
+                        actionLabel="舉辦活動"
+                        onAction={() => window.location.href = '?view=create-activity'}
+                    />
+                )}
+            </div>
+
+            {/* Detail Modal */}
+            {selectedActivity && (
+                <ActivityDetailModal
+                    activity={selectedActivity}
+                    currentUser={currentUser}
+                    onClose={() => setSelectedActivity(null)}
+                />
+            )}
+        </div>
+    );
+};
+
+export default ActivitiesPage;
