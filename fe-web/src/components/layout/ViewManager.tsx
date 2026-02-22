@@ -57,6 +57,15 @@ const ViewManager: React.FC<ViewManagerProps> = ({
         } else {
             setView('works-wall');
         }
+
+        // Fetch full profile (with avatarUrl) asynchronously to populate header avatar
+        authService.getMe()
+            .then((fullUser) => {
+                if (fullUser && !fullUser.error) {
+                    setCurrentUser(fullUser);
+                }
+            })
+            .catch(() => { /* ignore, basic userData is still usable */ });
     };
 
 
