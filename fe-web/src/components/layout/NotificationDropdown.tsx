@@ -55,6 +55,8 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
 
         if (item.type === 'invitation') {
             window.location.href = `?view=activities&id=${item.referenceId}`;
+        } else if (item.type === 'work_like' || item.type === 'work_comment') {
+            window.location.href = `?view=works-wall&workId=${item.referenceId}`;
         } else if (onNotificationClick) {
             onNotificationClick(item);
         }
@@ -65,6 +67,8 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
         switch (item.type) {
             case 'follow': return '開始追蹤了你';
             case 'like': return '對你的作品按讚';
+            case 'work_like': return '對你的作品按讚了';
+            case 'work_comment': return '在你的作品留言了';
             case 'join_request': return `申請加入 ${item.content || '活動'}`;
             case 'accepted': return `你的申請已被接受 ${item.content || ''}`;
             case 'rejected': return `你的申請未通過 ${item.content || ''}`;

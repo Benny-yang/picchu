@@ -33,6 +33,19 @@ const WorksWall: React.FC<WorksWallProps> = ({ currentUser }) => {
         fetchWorks(activeTab);
     }, [activeTab]);
 
+    // Auto-open work by URL param (e.g., from notification click)
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const workId = params.get('workId');
+        if (!workId) return;
+
+        workService.getById(Number(workId))
+            .then((work) => {
+                if (work) setSelectedWork(work);
+            })
+            .catch(() => { /* work not found, ignore */ });
+    }, []);
+
     const handleTabChange = (tab: 'hot' | 'following') => {
         setActiveTab(tab);
     };
