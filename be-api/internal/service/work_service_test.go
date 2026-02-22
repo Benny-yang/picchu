@@ -160,7 +160,7 @@ func TestDeleteWork_OnlyAuthor(t *testing.T) {
 // --- Like Service Tests ---
 
 func TestLikeWork_Success(t *testing.T) {
-	svc := service.NewLikeService(newMockLikeRepo(), newMockWorkRepo())
+	svc := service.NewLikeService(newMockLikeRepo(), newMockWorkRepo(), nil)
 
 	err := svc.LikeWork(1, 1)
 	if err != nil {
@@ -169,7 +169,7 @@ func TestLikeWork_Success(t *testing.T) {
 }
 
 func TestLikeWork_Duplicate(t *testing.T) {
-	svc := service.NewLikeService(newMockLikeRepo(), newMockWorkRepo())
+	svc := service.NewLikeService(newMockLikeRepo(), newMockWorkRepo(), nil)
 
 	_ = svc.LikeWork(1, 1)
 	err := svc.LikeWork(1, 1)
@@ -179,7 +179,7 @@ func TestLikeWork_Duplicate(t *testing.T) {
 }
 
 func TestUnlikeWork_NotLiked(t *testing.T) {
-	svc := service.NewLikeService(newMockLikeRepo(), newMockWorkRepo())
+	svc := service.NewLikeService(newMockLikeRepo(), newMockWorkRepo(), nil)
 
 	err := svc.UnlikeWork(1, 1)
 	if err == nil {
@@ -188,7 +188,7 @@ func TestUnlikeWork_NotLiked(t *testing.T) {
 }
 
 func TestLikeAndUnlike(t *testing.T) {
-	svc := service.NewLikeService(newMockLikeRepo(), newMockWorkRepo())
+	svc := service.NewLikeService(newMockLikeRepo(), newMockWorkRepo(), nil)
 
 	_ = svc.LikeWork(1, 1)
 	err := svc.UnlikeWork(1, 1)

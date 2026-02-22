@@ -25,17 +25,19 @@ type CreateCommentInput struct {
 }
 
 type commentService struct {
-	commentRepo repository.CommentRepository
-	workRepo    repository.WorkRepository
-	ratingRepo  repository.RatingRepository
+	commentRepo  repository.CommentRepository
+	workRepo     repository.WorkRepository
+	ratingRepo   repository.RatingRepository
+	notifService NotificationService
 }
 
 // NewCommentService creates a new CommentService.
-func NewCommentService(commentRepo repository.CommentRepository, workRepo repository.WorkRepository, ratingRepo repository.RatingRepository) CommentService {
+func NewCommentService(commentRepo repository.CommentRepository, workRepo repository.WorkRepository, ratingRepo repository.RatingRepository, notifService NotificationService) CommentService {
 	return &commentService{
-		commentRepo: commentRepo,
-		workRepo:    workRepo,
-		ratingRepo:  ratingRepo,
+		commentRepo:  commentRepo,
+		workRepo:     workRepo,
+		ratingRepo:   ratingRepo,
+		notifService: notifService,
 	}
 }
 
@@ -75,6 +77,15 @@ func (s *commentService) CreateForWork(workID, userID uint, content string) (*mo
 	// Update denormalized comment count
 	if err := s.workRepo.IncrementCommentCount(workID); err != nil {
 		logger.Warn("failed to increment comment count", "workID", workID, "error", err)
+	}
+
+	// Notify work author
+	work, err := s.workRepo.GetByID(workID, 0)
+	if err == nil && work.UserID != userID {
+		workIDStr := fmt.Sprintf("%d", workID)
+		if notifErr := s.notifService.SendNotification(work.UserID, userID, "work_comment", workIDStr, "有人在您的作品留言了！"); notifErr != nil {
+			logger.Warn("failed to send comment notification", "error", notifErr)
+		}
 	}
 
 	return s.commentRepo.GetByID(comment.ID)

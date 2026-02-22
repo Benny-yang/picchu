@@ -16,13 +16,14 @@ type LikeService interface {
 }
 
 type likeService struct {
-	likeRepo repository.LikeRepository
-	workRepo repository.WorkRepository
+	likeRepo     repository.LikeRepository
+	workRepo     repository.WorkRepository
+	notifService NotificationService
 }
 
 // NewLikeService creates a new LikeService.
-func NewLikeService(likeRepo repository.LikeRepository, workRepo repository.WorkRepository) LikeService {
-	return &likeService{likeRepo: likeRepo, workRepo: workRepo}
+func NewLikeService(likeRepo repository.LikeRepository, workRepo repository.WorkRepository, notifService NotificationService) LikeService {
+	return &likeService{likeRepo: likeRepo, workRepo: workRepo, notifService: notifService}
 }
 
 func (s *likeService) LikeWork(userID, workID uint) error {
@@ -45,6 +46,15 @@ func (s *likeService) LikeWork(userID, workID uint) error {
 
 	if err := s.workRepo.IncrementLikeCount(workID); err != nil {
 		logger.Warn("failed to increment like count", "workID", workID, "error", err)
+	}
+
+	// Notify work author
+	work, err := s.workRepo.GetByID(workID, 0)
+	if err == nil && work.UserID != userID {
+		workID64 := fmt.Sprintf("%d", workID)
+		if notifErr := s.notifService.SendNotification(work.UserID, userID, "work_like", workID64, "有人對您的作品按讚了！"); notifErr != nil {
+			logger.Warn("failed to send like notification", "error", notifErr)
+		}
 	}
 
 	return nil

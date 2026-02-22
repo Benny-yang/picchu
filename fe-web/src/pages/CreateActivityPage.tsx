@@ -25,6 +25,7 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
     const [currentTag, setCurrentTag] = useState('');
     const [isComposing, setIsComposing] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -231,6 +232,7 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
         }
 
         try {
+            setIsSubmitting(true);
             // Convert new images to base64, keep existing as strings
             const imagePromises = formData.images.map(img => {
                 if (img.isExisting) {
@@ -297,6 +299,8 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
             }
         } catch (error: any) {
             alert((isEditMode ? '更新' : '建立') + '失敗：' + (error.message || '未知錯誤'));
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -589,9 +593,23 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
                         <div className="pt-4">
                             <button
                                 type="submit"
-                                className="w-full bg-[#191919] text-white py-3.5 rounded-full font-bold hover:bg-[#333333] transition-colors shadow-lg shadow-gray-200"
+                                disabled={isSubmitting}
+                                className={`w-full py-3.5 rounded-full font-bold transition-colors shadow-lg shadow-gray-200 flex items-center justify-center gap-2 ${isSubmitting
+                                        ? 'bg-gray-400 text-white cursor-not-allowed'
+                                        : 'bg-[#191919] text-white hover:bg-[#333333]'
+                                    }`}
                             >
-                                {isEditMode ? '更新活動' : '發布活動'}
+                                {isSubmitting ? (
+                                    <>
+                                        <svg className="animate-spin w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                        </svg>
+                                        {isEditMode ? '更新中...' : '發布中...'}
+                                    </>
+                                ) : (
+                                    isEditMode ? '更新活動' : '發布活動'
+                                )}
                             </button>
                         </div>
                     </form>
