@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { tokenManager } from './tokenManager';
+import { API_URL } from '../config';
 
 const api = axios.create({
-    baseURL: 'http://localhost:8080/api/v1',
+    baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -21,7 +22,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        // Check if the request is for login or register or forgot/reset password
+        const isAuthRequest = error.config?.url?.includes('/auth/');
+        if (error.response?.status === 401 && !isAuthRequest) {
             tokenManager.clearAll();
             // Navigate to login via URL param (matches app routing)
             window.location.href = '?view=selection';

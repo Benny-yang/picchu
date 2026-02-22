@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Eye, EyeOff } from 'lucide-react';
 import ForgotPasswordModal from './ForgotPasswordModal';
+import { authService } from '../../services/authService';
 
 interface LoginFormProps {
     onGenericClick?: () => void; // For "Back" functionality
@@ -16,15 +17,62 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGenericClick, onSubmit, onClose
         email: '',
         password: ''
     });
+    const [rememberMe, setRememberMe] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = () => {
-        onSubmit?.(formData);
+    const [errorMessage, setErrorMessage] = useState('');
+    const [needsVerification, setNeedsVerification] = useState(false);
+    const [isResending, setIsResending] = useState(false);
+
+    const handleSubmit = async () => {
+        setErrorMessage('');
+        setNeedsVerification(false);
+        try {
+            await onSubmit?.({ ...formData, email: formData.email.trim(), rememberMe });
+        } catch (error: any) {
+            let message = error?.response?.data?.message || error?.message || '登入失敗';
+
+            // Handle specific validation error from backend
+            if (message.includes("Field validation for 'Email' failed")) {
+                message = "請輸入有效的信箱格式";
+            }
+
+            setErrorMessage(message);
+            if (message.includes('請先驗證您的信箱')) {
+                setNeedsVerification(true);
+            }
+        }
     };
+
+    const handleResend = async () => {
+        setIsResending(true);
+        try {
+            await authService.resendVerification(formData.email);
+            alert('驗證信已重新發送！請查收信箱。');
+            setNeedsVerification(false);
+            setErrorMessage('');
+        } catch (error: any) {
+            const message = error?.message || '發送失敗，請稍後再試';
+            alert(message);
+        } finally {
+            setIsResending(false);
+        }
+    };
+
+    const [successMessage, setSuccessMessage] = useState('');
+
+    React.useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('verified') === 'true') {
+            setSuccessMessage("信箱驗證成功！請登入。");
+            // Clear the param from URL without refresh
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+    }, []);
 
     return (
         <>
@@ -36,7 +84,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGenericClick, onSubmit, onClose
                 />
 
                 {/* Modal Card - Exact Dimensions from Figma 1722-5284 */}
-                <div className="relative w-[617px] h-[521px] bg-white rounded-[16px] flex flex-col items-center shadow-2xl animate-fade-in-up">
+                {/* Modal Card - Exact Dimensions from Figma 1722-5284 - Use min-h to prevent overflow */}
+                <div className="relative w-[617px] min-h-[521px] bg-white rounded-[16px] flex flex-col items-center shadow-2xl animate-fade-in-up pb-8 transition-all duration-300">
+
+                    {/* Success Message Alert */}
+                    {successMessage && (
+                        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded-full z-10 text-sm font-medium animate-fade-in-down">
+                            {successMessage}
+                        </div>
+                    )}
 
                     {/* Header: Back Button */}
                     <div className="absolute top-8 left-8">
@@ -102,8 +158,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGenericClick, onSubmit, onClose
                                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                 </button>
                             </div>
-                            {/* Forgot Password Link */}
-                            <div className="flex justify-end mt-1 px-1">
+                            <div className="flex justify-between mt-1 px-1">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={rememberMe}
+                                        onChange={(e) => setRememberMe(e.target.checked)}
+                                        className="w-4 h-4 rounded border-gray-300 text-[#009bcd] focus:ring-[#009bcd]"
+                                    />
+                                    <span className="text-xs font-medium text-gray-500">記住我 (30天)</span>
+                                </label>
                                 <button
                                     onClick={() => setShowForgotModal(true)}
                                     className="text-xs font-medium text-gray-500 hover:text-[#009bcd] transition-colors"
@@ -114,8 +178,26 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGenericClick, onSubmit, onClose
                         </div>
                     </div>
 
+                    {/* Error Message & Resend */}
+                    {errorMessage && (
+                        <div className="flex flex-col gap-2 mb-2">
+                            <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-2 rounded-lg text-sm text-center">
+                                {errorMessage}
+                            </div>
+                            {needsVerification && (
+                                <button
+                                    onClick={handleResend}
+                                    disabled={isResending}
+                                    className={`text-[#009bcd] text-sm underline hover:text-[#0089b6] transition-colors ${isResending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    {isResending ? '發送中...' : '沒收到驗證信？重新發送'}
+                                </button>
+                            )}
+                        </div>
+                    )}
+
                     {/* Submit Button */}
-                    <div className="mt-10 w-[280px] flex justify-center">
+                    <div className="mt-4 w-[280px] flex justify-center">
                         <button
                             onClick={handleSubmit}
                             className="w-[140px] h-[50px] rounded-full bg-gradient-to-r from-[#F2994A] to-[#009bcd] text-white font-bold text-lg hover:opacity-90 transition-opacity shadow-lg shadow-orange-500/20"
@@ -133,6 +215,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGenericClick, onSubmit, onClose
                     onBack={() => setShowForgotModal(false)}
                 />
             )}
+
         </>
     );
 };

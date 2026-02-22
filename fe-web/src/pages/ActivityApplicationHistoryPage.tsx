@@ -3,6 +3,7 @@ import MainHeader from '../components/layout/MainHeader';
 import { Clock, Calendar, MapPin, Loader2 } from 'lucide-react';
 import ActivityDetailModal from '../components/activities/ActivityDetailModal';
 import { authService } from '../services/authService';
+import { IMG_BASE_URL } from '../config';
 
 interface ActivityApplicationHistoryPageProps {
     currentUser?: any;
@@ -101,7 +102,17 @@ const ActivityApplicationHistoryPage: React.FC<ActivityApplicationHistoryPagePro
                     <div className="space-y-4">
                         {applications.map((app) => {
                             const activity = app.activity || {};
-                            const coverImage = parseActivityImages(activity.images);
+                            const parsedImg = parseActivityImages(activity.images);
+                            let rawImage = parsedImg || activity.image || activity.coverUrl;
+                            if (Array.isArray(rawImage) && rawImage.length > 0) {
+                                rawImage = rawImage[0];
+                            }
+                            if (typeof rawImage !== 'string') {
+                                rawImage = undefined;
+                            }
+                            const coverImage = rawImage
+                                ? (rawImage.startsWith('http') || rawImage.startsWith('data:') ? rawImage : `${IMG_BASE_URL}/${rawImage}`)
+                                : null;
 
                             return (
                                 <div key={app.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row hover:shadow-md transition-shadow">
@@ -111,7 +122,7 @@ const ActivityApplicationHistoryPage: React.FC<ActivityApplicationHistoryPagePro
                                             <img
                                                 src={coverImage}
                                                 alt={activity.title}
-                                                className="w-full h-full object-cover"
+                                                className="w-full h-full object-cover border-r border-gray-100 md:w-48 md:min-h-full"
                                             />
                                         ) : (
                                             <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
@@ -175,6 +186,7 @@ const ActivityApplicationHistoryPage: React.FC<ActivityApplicationHistoryPagePro
                 <ActivityDetailModal
                     activity={selectedActivity}
                     onClose={() => setSelectedActivity(null)}
+                    currentUser={currentUser}
                 />
             )}
         </div>

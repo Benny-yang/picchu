@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"azure-magnetar/config"
 	"azure-magnetar/internal/handler"
 	"azure-magnetar/internal/middleware"
@@ -10,8 +8,10 @@ import (
 	"azure-magnetar/internal/repository"
 	"azure-magnetar/internal/service"
 	"azure-magnetar/pkg/database"
+	"azure-magnetar/pkg/logger"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	cors "github.com/rs/cors/wrapper/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -39,6 +39,9 @@ import (
 // @name Authorization
 
 func main() {
+	// Load .env file (ignore error if not found, e.g. in production)
+	_ = godotenv.Load()
+
 	// 1. Load Configuration
 	cfg := config.LoadConfig()
 
@@ -48,16 +51,16 @@ func main() {
 
 	// 3. Setup Dependencies (Repositories → Services → Handlers)
 	repos := initRepositories()
-	services := initServices(repos)
+	services := initServices(repos, cfg)
 	handlers := initHandlers(services)
 
 	// 4. Setup Router
 	r := setupRouter(cfg, handlers)
 
 	// 5. Start Server
-	fmt.Printf("Server starting on port %s\n", cfg.Port)
+	logger.Info("server starting", "port", cfg.Port)
 	if err := r.Run(":" + cfg.Port); err != nil {
-		fmt.Println("Failed to start server:", err)
+		logger.Error("failed to start server", "error", err)
 	}
 }
 
@@ -110,7 +113,7 @@ func migrateDatabase() {
 		&model.Rating{},
 		&model.Tag{},
 	); err != nil {
-		fmt.Println("Failed to migrate database:", err)
+		logger.Error("failed to migrate database", "error", err)
 		return
 	}
 }
@@ -129,13 +132,13 @@ func initRepositories() *repositories {
 	}
 }
 
-func initServices(repos *repositories) *services {
+func initServices(repos *repositories, cfg *config.Config) *services {
 	return &services{
-		user:         service.NewUserService(repos.user, repos.follow),
+		user:         service.NewUserService(repos.user, repos.follow, repos.rating, cfg.APIBaseURL, cfg.FrontendURL),
 		follow:       service.NewFollowService(repos.follow, repos.rating, service.NewNotificationService(repos.notification)),
-		activity:     service.NewActivityService(repos.activity, service.NewNotificationService(repos.notification)),
-		work:         service.NewWorkService(repos.work),
-		comment:      service.NewCommentService(repos.comment, repos.work),
+		activity:     service.NewActivityService(repos.activity, service.NewNotificationService(repos.notification), repos.rating, cfg.APIBaseURL),
+		work:         service.NewWorkService(repos.work, cfg.APIBaseURL),
+		comment:      service.NewCommentService(repos.comment, repos.work, repos.rating),
 		like:         service.NewLikeService(repos.like, repos.work),
 		rating:       service.NewRatingService(repos.rating, repos.activity),
 		notification: service.NewNotificationService(repos.notification),
@@ -156,11 +159,12 @@ func initHandlers(svc *services) *handlers {
 // --- Router Setup ---
 
 func setupRouter(cfg *config.Config, h *handlers) *gin.Engine {
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Logger(), middleware.Recovery())
 
 	// CORS
 	r.Use(cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedOrigins:   []string{"*"}, // Allow all origins for dev
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposedHeaders:   []string{"Content-Length"},
@@ -179,6 +183,10 @@ func setupRouter(cfg *config.Config, h *handlers) *gin.Engine {
 	{
 		auth.POST("/register", h.user.Register)
 		auth.POST("/login", h.user.Login)
+		auth.POST("/forgot-password", h.user.ForgotPassword)
+		auth.POST("/reset-password", h.user.ResetPassword)
+		auth.GET("/verify", h.user.VerifyEmail)
+		auth.POST("/resend-verification", h.user.ResendVerification)
 	}
 
 	// --- Users ---

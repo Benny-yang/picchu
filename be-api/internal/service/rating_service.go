@@ -1,11 +1,11 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 
 	"azure-magnetar/internal/model"
 	"azure-magnetar/internal/repository"
+	"azure-magnetar/pkg/apperror"
 )
 
 // RatingService defines the interface for rating-related business logic.
@@ -43,20 +43,20 @@ func (s *ratingService) SubmitRating(activityID, raterID uint, input SubmitRatin
 	// 1. Activity must be ended
 	activity, err := s.activityRepo.GetByID(activityID)
 	if err != nil {
-		return errors.New("activity not found")
+		return apperror.New(apperror.CodeNotFound, "activity not found")
 	}
 	if activity.Status != "ended" {
-		return errors.New("ratings are only available for ended activities")
+		return apperror.New(apperror.CodeValidation, "ratings are only available for ended activities")
 	}
 
 	// 2. Cannot rate yourself
 	if raterID == input.TargetUserID {
-		return errors.New("cannot rate yourself")
+		return apperror.New(apperror.CodeValidation, "cannot rate yourself")
 	}
 
 	// 3. Validate score range
 	if input.Rating < 1 || input.Rating > 5 {
-		return errors.New("rating must be between 1 and 5")
+		return apperror.New(apperror.CodeValidation, "rating must be between 1 and 5")
 	}
 
 	// 4. Check for duplicate
@@ -65,7 +65,7 @@ func (s *ratingService) SubmitRating(activityID, raterID uint, input SubmitRatin
 		return fmt.Errorf("failed to check existing rating: %w", err)
 	}
 	if exists {
-		return errors.New("you have already rated this user for this activity")
+		return apperror.New(apperror.CodeConflict, "you have already rated this user for this activity")
 	}
 
 	// 5. Verify both users are participants (or host)
@@ -75,7 +75,7 @@ func (s *ratingService) SubmitRating(activityID, raterID uint, input SubmitRatin
 		isRaterParticipant = p != nil && p.Status == "accepted"
 	}
 	if !isRaterParticipant {
-		return errors.New("only participants can submit ratings")
+		return apperror.New(apperror.CodeForbidden, "only participants can submit ratings")
 	}
 
 	isTargetParticipant := activity.HostID == input.TargetUserID
@@ -84,7 +84,7 @@ func (s *ratingService) SubmitRating(activityID, raterID uint, input SubmitRatin
 		isTargetParticipant = p != nil && p.Status == "accepted"
 	}
 	if !isTargetParticipant {
-		return errors.New("target user is not a participant of this activity")
+		return apperror.New(apperror.CodeValidation, "target user is not a participant of this activity")
 	}
 
 	rating := &model.Rating{

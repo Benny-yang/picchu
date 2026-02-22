@@ -1,16 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Star, Calendar, User } from 'lucide-react';
 import { ratingService } from '../../services/ratingService';
-
-interface Review {
-    id: number;
-    reviewerName: string;
-    reviewerAvatar: string;
-    rating: number;
-    comment: string;
-    date: string;
-    activityTitle: string;
-}
+import type { Review } from '../../types';
 
 interface ReviewHistoryModalProps {
     isOpen: boolean;
@@ -48,15 +39,41 @@ const ReviewHistoryModal: React.FC<ReviewHistoryModalProps> = ({
                     // ID, ActivityID, RaterID, TargetID, Score, Comment, CreatedAt
                     // Preloaded: Activity, Rater, Target
                     // We need to map it to Review interface
-                    const mapped: Review[] = data.map((r: any) => ({
-                        id: r.id,
-                        reviewerName: r.rater?.username || 'Unknown',
-                        reviewerAvatar: r.rater?.profile?.avatarUrl ? (r.rater.profile.avatarUrl.startsWith('http') ? r.rater.profile.avatarUrl : `http://localhost:8080/${r.rater.profile.avatarUrl}`) : '',
-                        rating: r.score,
-                        comment: r.comment,
-                        date: new Date(r.createdAt).toLocaleDateString(),
-                        activityTitle: r.activity?.title || 'Activity',
-                    }));
+                    const mapped: Review[] = data.map((r: any) => {
+                        // Parse roles logic similar to ActivityDetailModal
+                        const profile = r.rater?.profile;
+                        const rolesData = profile?.roles;
+                        let parsedRoles: string[] = [];
+                        try {
+                            if (Array.isArray(rolesData)) {
+                                parsedRoles = rolesData;
+                            } else if (typeof rolesData === 'string' && rolesData.trim() !== '') {
+                                if (rolesData.startsWith('[')) {
+                                    parsedRoles = JSON.parse(rolesData);
+                                } else {
+                                    parsedRoles = [rolesData];
+                                }
+                            }
+                            if (parsedRoles.length === 0) {
+                                if (profile?.isPhotographer) parsedRoles.push('攝影師');
+                                if (profile?.isModel) parsedRoles.push('模特兒');
+                            }
+                        } catch {
+                            // ignore
+                        }
+
+                        return {
+                            id: r.id,
+                            reviewerId: r.raterId || r.rater?.id,
+                            reviewerName: r.rater?.username || 'Unknown',
+                            reviewerAvatar: r.rater?.profile?.avatarUrl ? (r.rater.profile.avatarUrl.startsWith('http') ? r.rater.profile.avatarUrl : `http://localhost:8080/${r.rater.profile.avatarUrl}`) : '',
+                            reviewerRoles: parsedRoles,
+                            rating: r.score,
+                            comment: r.comment,
+                            date: new Date(r.createdAt).toLocaleDateString(),
+                            activityTitle: r.activity?.title || 'Activity',
+                        };
+                    });
                     setReviews(mapped);
                 } catch (error) {
                     console.error('Failed to fetch reviews:', error);
@@ -73,7 +90,7 @@ const ReviewHistoryModal: React.FC<ReviewHistoryModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
             <div
                 className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl animate-scale-in overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
@@ -108,8 +125,15 @@ const ReviewHistoryModal: React.FC<ReviewHistoryModalProps> = ({
                         reviews.map((review) => (
                             <div key={review.id} className="border-b border-gray-100 last:border-0 pb-6 last:pb-0">
                                 <div className="flex justify-between items-start mb-2">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 bg-gray-50">
+                                    <div
+                                        className="flex items-center gap-3 cursor-pointer group"
+                                        onClick={() => {
+                                            if (review.reviewerId) {
+                                                window.location.href = `?view=profile&uid=${review.reviewerId}`;
+                                            }
+                                        }}
+                                    >
+                                        <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 bg-gray-50 group-hover:opacity-80 transition-opacity">
                                             {review.reviewerAvatar ? (
                                                 <img
                                                     src={review.reviewerAvatar}
@@ -123,7 +147,20 @@ const ReviewHistoryModal: React.FC<ReviewHistoryModalProps> = ({
                                             )}
                                         </div>
                                         <div>
-                                            <div className="font-semibold text-[#191919] text-sm">{review.reviewerName}</div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="font-semibold text-[#191919] text-sm group-hover:text-[#009bcd] transition-colors">
+                                                    {review.reviewerName}
+                                                </div>
+                                                {review.reviewerRoles && review.reviewerRoles.length > 0 && (
+                                                    <div className="flex gap-1">
+                                                        {review.reviewerRoles.map((role, idx) => (
+                                                            <span key={idx} className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+                                                                {role === 'photographer' ? '攝影師' : role === 'model' ? '模特兒' : role}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                             <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
                                                 <span>{review.date}</span>
                                             </div>

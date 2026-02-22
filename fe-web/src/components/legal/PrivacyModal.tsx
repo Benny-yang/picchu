@@ -36,7 +36,7 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
                 {/* Content - Scrollable */}
                 <div className="flex-1 overflow-y-auto px-10 py-8 bg-[#f7f7f7]">
                     <p className="text-grey-1 text-[16px] mb-8 font-normal leading-[1.5]">
-                        本隱私權政策自 2019 年 9 月 1 日起生效。
+                        本隱私權政策自 2026 年 1 月 1 日起生效。
                     </p>
 
                     <div className="text-grey-1 text-[16px] font-normal leading-[1.8] space-y-4 whitespace-pre-wrap">

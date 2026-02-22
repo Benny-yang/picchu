@@ -1,17 +1,6 @@
 import React from 'react';
 import { Copy, Heart, MessageCircle } from 'lucide-react';
-
-export interface Work {
-    id?: number | string;
-    url?: string;
-    image?: string; // Support both url (WorksWall) and image (UserProfile) property names if possible, or normalize. 
-    // Let's normalize to `image` as the primary prop, but I'll handle extracting it in the component or expect the caller to pass the image URL string directly.
-    // Better yet, let's keep it simple: accept `imageUrl` and `multiple` (boolean) or `imageCount` (number).
-    multiple?: boolean;
-    imageCount?: number;
-    likes?: number; // Optional for now
-    comments?: number; // Optional for now
-}
+import type { Work } from '../../types';
 
 interface WorkCardProps {
     imageUrl: string;

@@ -3,16 +3,14 @@ package service
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
-	"time"
 
 	"azure-magnetar/internal/model"
 	"azure-magnetar/internal/repository"
+	"azure-magnetar/pkg/apperror"
+	"azure-magnetar/pkg/storage"
 )
 
 // WorkService defines the interface for work/post-related business logic.
@@ -58,12 +56,13 @@ type WallCursorParams struct {
 }
 
 type workService struct {
-	repo repository.WorkRepository
+	repo       repository.WorkRepository
+	apiBaseURL string
 }
 
 // NewWorkService creates a new WorkService.
-func NewWorkService(repo repository.WorkRepository) WorkService {
-	return &workService{repo: repo}
+func NewWorkService(repo repository.WorkRepository, apiBaseURL string) WorkService {
+	return &workService{repo: repo, apiBaseURL: apiBaseURL}
 }
 
 func (s *workService) GetWall(filterType string, seed int64, cursorStr string, limit int, currentUserID uint) (*WallResponse, error) {
@@ -109,12 +108,12 @@ func (s *workService) Create(userID uint, input CreateWorkInput) (*model.Post, e
 	}
 
 	if len(input.Images) == 0 {
-		return nil, errors.New("at least one image is required")
+		return nil, apperror.New(apperror.CodeValidation, "at least one image is required")
 	}
 
 	var imageURLs []string
 	for i, imgBase64 := range input.Images {
-		url, err := saveWorkImageFromBase64(userID, imgBase64, i)
+		url, err := storage.SaveBase64Image(s.apiBaseURL, "works", userID, imgBase64, i)
 		if err != nil {
 			return nil, err
 		}
@@ -150,11 +149,11 @@ func (s *workService) GetByID(id uint, currentUserID uint) (*model.Post, error) 
 func (s *workService) Update(userID, workID uint, input UpdateWorkInput) (*model.Post, error) {
 	post, err := s.repo.GetByID(workID, userID)
 	if err != nil {
-		return nil, errors.New("work not found")
+		return nil, apperror.New(apperror.CodeNotFound, "work not found")
 	}
 
 	if post.UserID != userID {
-		return nil, errors.New("only the author can update this work")
+		return nil, apperror.New(apperror.CodeForbidden, "only the author can update this work")
 	}
 
 	if input.Description != "" {
@@ -182,11 +181,11 @@ func (s *workService) Update(userID, workID uint, input UpdateWorkInput) (*model
 func (s *workService) Delete(userID, workID uint) error {
 	post, err := s.repo.GetByID(workID, userID)
 	if err != nil {
-		return errors.New("work not found")
+		return apperror.New(apperror.CodeNotFound, "work not found")
 	}
 
 	if post.UserID != userID {
-		return errors.New("only the author can delete this work")
+		return apperror.New(apperror.CodeForbidden, "only the author can delete this work")
 	}
 
 	return s.repo.Delete(workID)
@@ -194,32 +193,6 @@ func (s *workService) Delete(userID, workID uint) error {
 
 func (s *workService) GetByUserID(userID uint) ([]model.Post, error) {
 	return s.repo.GetByUserID(userID)
-}
-
-// saveWorkImageFromBase64 decodes base64 image data and saves it to disk.
-func saveWorkImageFromBase64(userID uint, base64Data string, index int) (string, error) {
-	// Generate unique filename
-	fileName := fmt.Sprintf("work_%d_%d_%d.jpg", userID, time.Now().Unix(), index)
-	filePath := filepath.Join("uploads", "works", fileName)
-
-	// Ensure directory exists
-	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
-		return "", fmt.Errorf("failed to create work directory: %w", err)
-	}
-
-	// Decode base64
-	data, err := base64.StdEncoding.DecodeString(base64Data)
-	if err != nil {
-		return "", errors.New("invalid base64 image data")
-	}
-
-	// Write file
-	if err := os.WriteFile(filePath, data, 0644); err != nil {
-		return "", fmt.Errorf("failed to save work image: %w", err)
-	}
-
-	// Return full URL
-	return fmt.Sprintf("http://localhost:8080/uploads/works/%s", fileName), nil
 }
 
 func (s *workService) processTags(description string) ([]model.Tag, error) {

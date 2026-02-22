@@ -11,7 +11,7 @@ const testSecret = "test-secret-key-for-unit-tests"
 func TestGenerateAndParseToken(t *testing.T) {
 	userID := uint(42)
 
-	token, err := auth.GenerateToken(userID, testSecret)
+	token, err := auth.GenerateToken(userID, testSecret, auth.TokenExpiry)
 	if err != nil {
 		t.Fatalf("GenerateToken failed: %v", err)
 	}
@@ -31,7 +31,7 @@ func TestGenerateAndParseToken(t *testing.T) {
 func TestParseTokenWithWrongSecret(t *testing.T) {
 	userID := uint(42)
 
-	token, err := auth.GenerateToken(userID, testSecret)
+	token, err := auth.GenerateToken(userID, testSecret, auth.TokenExpiry)
 	if err != nil {
 		t.Fatalf("GenerateToken failed: %v", err)
 	}
@@ -57,8 +57,8 @@ func TestParseTokenWithEmptyString(t *testing.T) {
 }
 
 func TestGenerateTokenDifferentUsers(t *testing.T) {
-	token1, _ := auth.GenerateToken(1, testSecret)
-	token2, _ := auth.GenerateToken(2, testSecret)
+	token1, _ := auth.GenerateToken(1, testSecret, auth.TokenExpiry)
+	token2, _ := auth.GenerateToken(2, testSecret, auth.TokenExpiry)
 
 	if token1 == token2 {
 		t.Fatal("Different users should produce different tokens")

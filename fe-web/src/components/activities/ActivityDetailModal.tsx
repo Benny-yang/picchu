@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import ActivityApplicationModal from './ActivityApplicationModal';
 import ActivityRatingModal from './ActivityRatingModal';
 import CommentsSection from './CommentsSection';
-import { X, MapPin, Users, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, MapPin, Users } from 'lucide-react';
 import UserInfo from '../user/UserInfo';
 import ApplicationManagementModal from './ApplicationManagementModal';
 import { activityService } from '../../services/activityService';
+import { IMG_BASE_URL } from '../../config';
+import ActivityImageGallery from './ActivityImageGallery';
+import ActivityActionButtons from './ActivityActionButtons';
 
 
 interface ActivityDetailModalProps {
@@ -17,14 +20,13 @@ interface ActivityDetailModalProps {
 const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onClose, currentUser }) => {
     const [details, setDetails] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedImage, setSelectedImage] = useState(0);
     const [showApplicationModal, setShowApplicationModal] = useState(false);
     const [showManagementModal, setShowManagementModal] = useState(false);
     const [showRatingModal, setShowRatingModal] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
-    // Status: 'idle' | 'applied' | 'joined' | 'isHost'
-    const [status, setStatus] = useState<'idle' | 'applied' | 'joined' | 'isHost'>('idle');
+    // Status: 'idle' | 'applied' | 'joined' | 'isHost' | 'rejected'
+    const [status, setStatus] = useState<'idle' | 'applied' | 'joined' | 'isHost' | 'rejected'>('idle');
     const [isEnded, setIsEnded] = useState(false);
 
     const activityId = activity?.id || activity?.ID;
@@ -55,6 +57,8 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
                                 setStatus('joined');
                             } else if (userStatus === 'pending') {
                                 setStatus('applied');
+                            } else if (userStatus === 'rejected') {
+                                setStatus('rejected');
                             } else {
                                 setStatus('idle');
                             }
@@ -76,16 +80,6 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
     const images = details?.images?.length > 0
         ? details.images
         : (activity.image ? [activity.image] : [activity.coverUrl || '']);
-
-    const handlePrev = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setSelectedImage((prev) => (prev === 0 ? prev : prev - 1));
-    };
-
-    const handleNext = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setSelectedImage((prev) => (prev === images.length - 1 ? prev : prev + 1));
-    };
 
     const handleSubmitApplication = async (message?: string) => {
         try {
@@ -126,10 +120,11 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
         }
     };
 
+
     const getAvatarUrl = (url: string) => {
         if (!url) return '';
         if (url.startsWith('http')) return url;
-        return `http://localhost:8080/${url}`;
+        return `${IMG_BASE_URL}/${url}`;
     };
 
     const displayData = details || activity;
@@ -176,7 +171,7 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
     })();
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={onClose}>
             {/* Close Button (Outer) */}
             <button
                 onClick={onClose}
@@ -185,52 +180,14 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
                 <X size={32} />
             </button>
 
-            <div className="bg-white rounded-xl w-full max-w-5xl h-[85vh] max-h-[800px] overflow-hidden flex flex-col md:flex-row shadow-2xl relative">
+            <div
+                className="bg-white rounded-xl w-full max-w-5xl h-[85vh] max-h-[800px] overflow-hidden flex flex-col md:flex-row shadow-2xl relative"
+                onClick={(e) => e.stopPropagation()}
+            >
 
                 {/* Left: Images */}
                 <div className="w-full md:w-1/2 bg-black flex flex-col relative group">
-                    {isLoading ? (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
-                        </div>
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-900 overflow-hidden relative">
-                            <img
-                                src={images[selectedImage]}
-                                alt="Main"
-                                className="w-full h-full object-contain"
-                            />
-
-                            {selectedImage > 0 && (
-                                <button
-                                    onClick={handlePrev}
-                                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
-                                >
-                                    <ChevronLeft size={24} />
-                                </button>
-                            )}
-
-                            {selectedImage < images.length - 1 && (
-                                <button
-                                    onClick={handleNext}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
-                                >
-                                    <ChevronRight size={24} />
-                                </button>
-                            )}
-
-                            <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
-                                {images.map((_: any, idx: number) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => setSelectedImage(idx)}
-                                        className={`w-2 h-2 rounded-full transition-all ${selectedImage === idx ? 'bg-white w-4' : 'bg-white/50 hover:bg-white/80'
-                                            }`}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                    <ActivityImageGallery images={images} isLoading={isLoading} />
                 </div>
 
                 {/* Right: Info */}
@@ -243,7 +200,7 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
                             name={hostName}
                             userId={displayData.host?.id || displayData.host?.ID}
                             role={hostRoles.slice(0, 2)}
-                            rating={displayData.host?.rating || displayData.rating || 0}
+                            rating={displayData.host?.averageRating || 0}
                             size="lg"
                             className="cursor-pointer"
                         />
@@ -308,73 +265,17 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
                     </div>
 
                     {/* Footer Button */}
-                    {status === 'isHost' ? (
-                        <div className="flex justify-center pt-6 gap-3 mt-6">
-                            <button
-                                onClick={() => setShowManagementModal(true)}
-                                className="px-5 py-2 rounded-full text-white font-medium text-sm shadow-md bg-[#191919] hover:bg-[#333] transition-all transform active:scale-95 flex items-center gap-2"
-                            >
-                                <Users size={16} />
-                                管理報名
-                            </button>
-                            <button
-                                onClick={() => {
-                                    window.location.href = `?view=create-activity&mode=edit&id=${activityId}`;
-                                }}
-                                className="px-5 py-2 rounded-full text-[#191919] font-medium text-sm shadow-sm border border-gray-200 hover:bg-gray-50 transition-all transform active:scale-95 flex items-center gap-2"
-                            >
-                                編輯
-                            </button>
-                            <button
-                                onClick={handleDeleteActivity}
-                                className="px-5 py-2 rounded-full text-red-500 font-medium text-sm shadow-sm border border-red-100 hover:bg-red-50 transition-all transform active:scale-95 flex items-center gap-2"
-                            >
-                                取消
-                            </button>
-                        </div>
-                    ) : (status !== 'joined' || (status === 'joined' && isEnded)) && (
-                        <div className={`flex justify-center pt-8 gap-4 ${status === 'idle' ? 'mt-auto' : 'mt-8'}`}>
-                            {status === 'idle' ? (
-                                (displayData.maxParticipants > 0 && displayData.currentParticipants >= displayData.maxParticipants) ? (
-                                    <button
-                                        disabled
-                                        className="px-12 py-2.5 rounded-full bg-gray-300 text-white font-bold text-base cursor-not-allowed"
-                                    >
-                                        人數已額滿
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={() => setShowApplicationModal(true)}
-                                        className="px-12 py-2.5 rounded-full text-white font-bold text-base shadow-md hover:shadow-lg hover:opacity-95 transition-all transform active:scale-95"
-                                        style={{ background: "linear-gradient(90deg, #FDBB2D 0%, #22C1C3 100%)" }}
-                                    >
-                                        申請加入
-                                    </button>
-                                )
-                            ) : status === 'applied' ? (
-                                <>
-                                    <button
-                                        onClick={handleCancelApplication}
-                                        className="px-8 py-2.5 rounded-full border-2 border-red-500 text-red-500 font-bold text-base hover:bg-red-50 transition-colors"
-                                    >
-                                        取消申請
-                                    </button>
-                                    <div className="px-12 py-2.5 rounded-full bg-[#B3B3B3] text-white font-bold text-base cursor-default flex items-center justify-center">
-                                        已申請
-                                    </div>
-                                </>
-                            ) : (
-                                <button
-                                    onClick={() => setShowRatingModal(true)}
-                                    className="px-12 py-2.5 rounded-full text-white font-bold text-base shadow-md hover:shadow-lg hover:opacity-95 transition-all transform active:scale-95 flex items-center gap-2"
-                                    style={{ backgroundColor: "#FFAF3C" }}
-                                >
-                                    <Star className="fill-white" size={20} />
-                                    <span>評價</span>
-                                </button>
-                            )}
-                        </div>
-                    )}
+                    <ActivityActionButtons
+                        status={status}
+                        isEnded={isEnded}
+                        displayData={displayData}
+                        activityId={activityId}
+                        onShowManagementModal={() => setShowManagementModal(true)}
+                        onShowRatingModal={() => setShowRatingModal(true)}
+                        onShowApplicationModal={() => setShowApplicationModal(true)}
+                        onDeleteActivity={handleDeleteActivity}
+                        onCancelApplication={handleCancelApplication}
+                    />
 
                     {/* Message Board */}
                     {(status === 'joined' || status === 'isHost') && <CommentsSection activityId={Number(activityId)} />}
@@ -397,6 +298,9 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
             <ActivityRatingModal
                 isOpen={showRatingModal}
                 onClose={() => setShowRatingModal(false)}
+                activityId={Number(activityId)}
+                currentUser={currentUser}
+                host={displayData.host}
                 onSubmit={() => {
                     setShowRatingModal(false);
                 }}
@@ -412,8 +316,8 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
             {/* Cancellation Reason Modal */}
             {
                 showCancelModal && (
-                    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+                    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={() => setShowCancelModal(false)}>
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
                             <h3 className="text-xl font-bold text-[#191919] mb-4">取消活動</h3>
                             <p className="text-sm text-gray-500 mb-4">
                                 請輸入取消原因，這將會通知所有已報名的參加者。

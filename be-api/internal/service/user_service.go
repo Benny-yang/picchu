@@ -1,15 +1,15 @@
 package service
 
 import (
-	"encoding/base64"
-	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
 	"azure-magnetar/internal/model"
 	"azure-magnetar/internal/repository"
+	"azure-magnetar/pkg/apperror"
+	"azure-magnetar/pkg/email"
+	"azure-magnetar/pkg/logger"
+	"azure-magnetar/pkg/storage"
 	"azure-magnetar/pkg/utils"
 )
 
@@ -21,6 +21,10 @@ type UserService interface {
 	GetUserWithProfile(id uint) (*UserProfileResponse, error)
 	ListUsers() ([]model.User, error)
 	UpdateProfile(userID uint, input UpdateProfileInput) (*model.UserProfile, error)
+	ForgotPassword(email string) error
+	ResetPassword(token, newPassword string) error
+	VerifyEmail(token string) error
+	ResendVerification(email string) error
 }
 
 // UpdateProfileInput represents the data for profile updates.
@@ -43,24 +47,31 @@ type UserProfileResponse struct {
 	Profile        *model.UserProfile `json:"profile"`
 	FollowerCount  int64              `json:"followerCount"`
 	FollowingCount int64              `json:"followingCount"`
+	AverageRating  float64            `json:"averageRating"`
 }
 
 type userService struct {
-	repo       repository.UserRepository
-	followRepo repository.FollowRepository
+	repo        repository.UserRepository
+	followRepo  repository.FollowRepository
+	ratingRepo  repository.RatingRepository
+	apiBaseURL  string
+	frontendURL string
 }
 
 // NewUserService creates a new UserService.
-func NewUserService(repo repository.UserRepository, followRepo repository.FollowRepository) UserService {
+func NewUserService(repo repository.UserRepository, followRepo repository.FollowRepository, ratingRepo repository.RatingRepository, apiBaseURL, frontendURL string) UserService {
 	return &userService{
-		repo:       repo,
-		followRepo: followRepo,
+		repo:        repo,
+		followRepo:  followRepo,
+		ratingRepo:  ratingRepo,
+		apiBaseURL:  apiBaseURL,
+		frontendURL: frontendURL,
 	}
 }
 
-func (s *userService) Register(email, password string) error {
-	if _, err := s.repo.GetByEmail(email); err == nil {
-		return errors.New("此 email 已註冊")
+func (s *userService) Register(emailStr, password string) error {
+	if _, err := s.repo.GetByEmail(emailStr); err == nil {
+		return apperror.New(apperror.CodeConflict, "此 email 已註冊")
 	}
 
 	hashedPassword, err := utils.HashPassword(password)
@@ -68,30 +79,60 @@ func (s *userService) Register(email, password string) error {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	user := &model.User{
-		UserName: email,
-		Email:    email,
-		Password: hashedPassword,
+	verificationToken, err := utils.GenerateSecureToken(32)
+	if err != nil {
+		return err
 	}
 
-	return s.repo.Create(user)
+	user := &model.User{
+		UserName:          emailStr,
+		Email:             emailStr,
+		Password:          hashedPassword,
+		IsVerified:        false,
+		VerificationToken: verificationToken,
+	}
+
+	if err := s.repo.Create(user); err != nil {
+		return err
+	}
+
+	verifyLink := fmt.Sprintf("%s/api/v1/auth/verify?token=%s", s.apiBaseURL, verificationToken)
+
+	go func() {
+		if err := email.SendVerificationEmail(user.Email, verifyLink); err != nil {
+			logger.Error("failed to send verification email", "email", user.Email, "error", err)
+		}
+	}()
+
+	return nil
 }
 
 func (s *userService) Login(email, password string) (*model.User, error) {
 	user, err := s.repo.GetByEmail(email)
 	if err != nil {
-		return nil, errors.New("此帳號不存在")
+		return nil, apperror.New(apperror.CodeUnauthorized, "此帳號不存在")
 	}
 
 	if !utils.CheckPassword(password, user.Password) {
-		return nil, errors.New("密碼錯誤")
+		return nil, apperror.New(apperror.CodeUnauthorized, "密碼錯誤")
+	}
+
+	if !user.IsVerified {
+		return nil, apperror.New(apperror.CodeForbidden, "請先驗證您的信箱")
 	}
 
 	return user, nil
 }
 
 func (s *userService) GetUser(id uint) (*model.User, error) {
-	return s.repo.GetByID(id)
+	user, err := s.repo.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if avg, err := s.ratingRepo.GetAverageByUserID(id); err == nil {
+		user.AverageRating = avg
+	}
+	return user, nil
 }
 
 func (s *userService) GetUserWithProfile(id uint) (*UserProfileResponse, error) {
@@ -104,6 +145,10 @@ func (s *userService) GetUserWithProfile(id uint) (*UserProfileResponse, error) 
 
 	followerCount, _ := s.followRepo.CountFollowers(id)
 	followingCount, _ := s.followRepo.CountFollowing(id)
+	var averageRating float64
+	if avg, err := s.ratingRepo.GetAverageByUserID(id); err == nil {
+		averageRating = avg
+	}
 
 	return &UserProfileResponse{
 		ID:             user.ID,
@@ -112,6 +157,7 @@ func (s *userService) GetUserWithProfile(id uint) (*UserProfileResponse, error) 
 		Profile:        profile,
 		FollowerCount:  followerCount,
 		FollowingCount: followingCount,
+		AverageRating:  averageRating,
 	}, nil
 }
 
@@ -121,11 +167,7 @@ func (s *userService) ListUsers() ([]model.User, error) {
 
 func (s *userService) UpdateProfile(userID uint, input UpdateProfileInput) (*model.UserProfile, error) {
 	if !input.IsPhotographer && !input.IsModel {
-		return nil, errors.New("at least one role (photographer or model) must be selected")
-	}
-
-	if input.Gender == "" {
-		return nil, errors.New("gender is required")
+		return nil, apperror.New(apperror.CodeValidation, "at least one role (photographer or model) must be selected")
 	}
 
 	user, err := s.repo.GetByID(userID)
@@ -139,7 +181,7 @@ func (s *userService) UpdateProfile(userID uint, input UpdateProfileInput) (*mod
 	}
 
 	if input.AvatarBase64 != "" {
-		avatarURL, err := saveAvatarFromBase64(userID, input.AvatarBase64)
+		avatarURL, err := storage.SaveBase64Image(s.apiBaseURL, "avatars", userID, input.AvatarBase64, 0)
 		if err != nil {
 			return nil, fmt.Errorf("failed to save avatar: %w", err)
 		}
@@ -155,7 +197,7 @@ func (s *userService) UpdateProfile(userID uint, input UpdateProfileInput) (*mod
 	}
 
 	profile.City = input.City
-	profile.Gender = input.Gender
+
 	profile.Phone = input.Phone
 	profile.IsPhotographer = input.IsPhotographer
 	profile.IsModel = input.IsModel
@@ -168,25 +210,96 @@ func (s *userService) UpdateProfile(userID uint, input UpdateProfileInput) (*mod
 	return profile, nil
 }
 
-// saveAvatarFromBase64 decodes base64 image data and saves it to disk.
-func saveAvatarFromBase64(userID uint, base64Data string) (string, error) {
-	fileName := fmt.Sprintf("avatar_%d_%d.jpg", userID, time.Now().Unix())
-	filePath := filepath.Join("uploads", "avatars", fileName)
-
-	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
-		return "", fmt.Errorf("failed to create avatar directory: %w", err)
-	}
-
-	data, err := base64.StdEncoding.DecodeString(base64Data)
+func (s *userService) ForgotPassword(emailStr string) error {
+	user, err := s.repo.GetByEmail(emailStr)
 	if err != nil {
-		return "", errors.New("invalid base64 avatar data")
+		// Security: return nil to prevent email enumeration attacks
+		return nil
 	}
 
-	if err := os.WriteFile(filePath, data, 0644); err != nil {
-		return "", fmt.Errorf("failed to save avatar: %w", err)
+	token, err := utils.GenerateSecureToken(32)
+	if err != nil {
+		return err
 	}
 
-	// Return full URL (assuming backend is at localhost:8080)
-	// In production, this should be configurable
-	return fmt.Sprintf("http://localhost:8080/uploads/avatars/%s", fileName), nil
+	expiry := time.Now().Add(1 * time.Hour)
+
+	user.ResetToken = token
+	user.ResetTokenExpiry = &expiry
+	if err := s.repo.UpdateUser(user); err != nil {
+		return err
+	}
+
+	resetLink := fmt.Sprintf("%s?view=reset-password&token=%s", s.frontendURL, token)
+
+	go func() {
+		if err := email.SendPasswordResetEmail(user.Email, resetLink); err != nil {
+			logger.Error("failed to send reset email", "email", user.Email, "error", err)
+		}
+	}()
+
+	return nil
+}
+
+func (s *userService) ResetPassword(token, newPassword string) error {
+	user, err := s.repo.GetByResetToken(token)
+	if err != nil {
+		return apperror.New(apperror.CodeValidation, "無效或已過期的重設連結")
+	}
+
+	hashedPassword, err := utils.HashPassword(newPassword)
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	user.Password = hashedPassword
+	user.ResetToken = ""
+	user.ResetTokenExpiry = nil
+	return s.repo.UpdateUser(user)
+}
+
+func (s *userService) VerifyEmail(token string) error {
+	user, err := s.repo.GetByVerificationToken(token)
+	if err != nil {
+		return apperror.New(apperror.CodeValidation, "無效的驗證連結")
+	}
+
+	if user.IsVerified {
+		return apperror.New(apperror.CodeConflict, "信箱已驗證")
+	}
+
+	user.IsVerified = true
+	user.VerificationToken = "" // Clear token
+	return s.repo.UpdateUser(user)
+}
+
+func (s *userService) ResendVerification(emailStr string) error {
+	user, err := s.repo.GetByEmail(emailStr)
+	if err != nil {
+		return apperror.New(apperror.CodeNotFound, "此信箱未註冊")
+	}
+
+	if user.IsVerified {
+		return apperror.New(apperror.CodeConflict, "此信箱已驗證，請直接登入")
+	}
+
+	verificationToken, err := utils.GenerateSecureToken(32)
+	if err != nil {
+		return err
+	}
+
+	user.VerificationToken = verificationToken
+	if err := s.repo.UpdateUser(user); err != nil {
+		return fmt.Errorf("failed to update user token: %w", err)
+	}
+
+	verifyLink := fmt.Sprintf("%s/api/v1/auth/verify?token=%s", s.apiBaseURL, verificationToken)
+
+	go func() {
+		if err := email.SendVerificationEmail(user.Email, verifyLink); err != nil {
+			logger.Error("failed to resend verification email", "email", user.Email, "error", err)
+		}
+	}()
+
+	return nil
 }

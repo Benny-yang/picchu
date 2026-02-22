@@ -22,13 +22,13 @@ type Claims struct {
 }
 
 // GenerateToken creates a signed JWT for the given user ID.
-func GenerateToken(userID uint, secret string) (string, error) {
+func GenerateToken(userID uint, secret string, duration time.Duration) (string, error) {
 	now := time.Now()
 	claims := Claims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(TokenExpiry)),
+			ExpiresAt: jwt.NewNumericDate(now.Add(duration)),
 		},
 	}
 

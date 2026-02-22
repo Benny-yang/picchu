@@ -3,6 +3,7 @@ package service_test
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"azure-magnetar/internal/model"
 	"azure-magnetar/internal/repository"
@@ -129,6 +130,15 @@ func (r *mockActivityRepo) CountAccepted(activityID uint) (int64, error) {
 	return count, nil
 }
 
+func (r *mockActivityRepo) BatchCountAccepted(activityIDs []uint) (map[uint]int64, error) {
+	result := make(map[uint]int64)
+	for _, id := range activityIDs {
+		count, _ := r.CountAccepted(id)
+		result[id] = count
+	}
+	return result, nil
+}
+
 func (r *mockActivityRepo) GetApplicationsByUserID(userID uint) ([]model.ActivityParticipant, error) {
 	var result []model.ActivityParticipant
 	for _, p := range r.participants {
@@ -168,7 +178,7 @@ func (m *mockNotificationService) GetUnreadCount(userID uint) (int64, error) {
 func TestCreateActivity(t *testing.T) {
 	repo := newMockActivityRepo()
 	notif := newMockNotificationService()
-	svc := service.NewActivityService(repo, notif)
+	svc := service.NewActivityService(repo, notif, newMockRatingRepo(), "http://localhost:8080")
 
 	input := service.CreateActivityInput{
 		Title:       "Test Activity",
@@ -193,7 +203,7 @@ func TestCreateActivity(t *testing.T) {
 
 func TestUpdateActivity_OnlyHost(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService())
+	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
 
 	input := service.CreateActivityInput{Title: "Test Activity"}
 	activity, _ := svc.Create(1, input)
@@ -216,7 +226,7 @@ func TestUpdateActivity_OnlyHost(t *testing.T) {
 
 func TestDeleteActivity_OnlyHost(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService())
+	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
 
 	input := service.CreateActivityInput{Title: "Test Activity"}
 	activity, _ := svc.Create(1, input)
@@ -234,7 +244,7 @@ func TestDeleteActivity_OnlyHost(t *testing.T) {
 
 func TestApply_HostCannotApply(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService())
+	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
 
 	input := service.CreateActivityInput{Title: "Test Activity"}
 	activity, _ := svc.Create(1, input)
@@ -247,7 +257,7 @@ func TestApply_HostCannotApply(t *testing.T) {
 
 func TestApply_Success(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService())
+	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
 
 	input := service.CreateActivityInput{Title: "Test Activity", MaxParticipants: 10}
 	activity, _ := svc.Create(1, input)
@@ -260,7 +270,7 @@ func TestApply_Success(t *testing.T) {
 
 func TestApply_Duplicate(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService())
+	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
 
 	input := service.CreateActivityInput{Title: "Test Activity", MaxParticipants: 10}
 	activity, _ := svc.Create(1, input)
@@ -274,7 +284,7 @@ func TestApply_Duplicate(t *testing.T) {
 
 func TestApply_NotOpenActivity(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService())
+	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
 
 	input := service.CreateActivityInput{Title: "Test Activity", MaxParticipants: 10}
 	activity, _ := svc.Create(1, input)
@@ -289,7 +299,7 @@ func TestApply_NotOpenActivity(t *testing.T) {
 
 func TestGetUserStatus(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService())
+	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
 
 	input := service.CreateActivityInput{Title: "Test Activity", MaxParticipants: 10}
 	activity, _ := svc.Create(1, input)
@@ -316,7 +326,7 @@ func TestGetUserStatus(t *testing.T) {
 
 func TestUpdateApplicantStatus_OnlyHost(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService())
+	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
 
 	input := service.CreateActivityInput{Title: "Test Activity", MaxParticipants: 10}
 	activity, _ := svc.Create(1, input)
@@ -337,7 +347,7 @@ func TestUpdateApplicantStatus_OnlyHost(t *testing.T) {
 
 func TestUpdateApplicantStatus_InvalidStatus(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService())
+	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
 
 	input := service.CreateActivityInput{Title: "Test Activity", MaxParticipants: 10}
 	activity, _ := svc.Create(1, input)
@@ -346,5 +356,100 @@ func TestUpdateApplicantStatus_InvalidStatus(t *testing.T) {
 	err := svc.UpdateApplicantStatus(activity.ID, 1, 2, "invalid_status")
 	if err == nil {
 		t.Fatal("invalid status should be rejected")
+	}
+}
+
+func TestCreateActivity_EventTimeWithTimezoneOffset(t *testing.T) {
+	repo := newMockActivityRepo()
+	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+
+	input := service.CreateActivityInput{
+		Title:     "Timezone Test",
+		EventTime: "2026-02-17T21:00:00+08:00",
+	}
+
+	activity, err := svc.Create(1, input)
+	if err != nil {
+		t.Fatalf("Create failed: %v", err)
+	}
+
+	// 2026-02-17T21:00:00+08:00 should be stored as 2026-02-17T13:00:00 UTC
+	expectedYear := 2026
+	expectedMonth := 2
+	expectedDay := 17
+	expectedHour := 13
+	expectedMinute := 0
+
+	if activity.EventTime.Year() != expectedYear ||
+		int(activity.EventTime.Month()) != expectedMonth ||
+		activity.EventTime.Day() != expectedDay ||
+		activity.EventTime.Hour() != expectedHour ||
+		activity.EventTime.Minute() != expectedMinute {
+		t.Errorf("EventTime = %v, want 2026-02-17 13:00:00 UTC", activity.EventTime)
+	}
+
+	if activity.EventTime.Location().String() != "UTC" {
+		t.Errorf("EventTime location = %s, want UTC", activity.EventTime.Location().String())
+	}
+
+	// Verify via GetByID
+	fetched, err := svc.GetByID(activity.ID)
+	if err != nil {
+		t.Fatalf("GetByID failed: %v", err)
+	}
+	if !fetched.EventTime.Equal(activity.EventTime) {
+		t.Errorf("GetByID EventTime = %v, want %v", fetched.EventTime, activity.EventTime)
+	}
+}
+
+func TestCreateActivity_EventTimeWithoutOffset(t *testing.T) {
+	repo := newMockActivityRepo()
+	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+
+	input := service.CreateActivityInput{
+		Title:     "No Offset Test",
+		EventTime: "2026-02-17T21:00:00",
+	}
+
+	activity, err := svc.Create(1, input)
+	if err != nil {
+		t.Fatalf("Create failed: %v", err)
+	}
+
+	// Without offset, time.Parse treats it as UTC, so it stays 21:00 UTC
+	if activity.EventTime.Hour() != 21 {
+		t.Errorf("EventTime hour = %d, want 21", activity.EventTime.Hour())
+	}
+	if activity.EventTime.Location().String() != "UTC" {
+		t.Errorf("EventTime location = %s, want UTC", activity.EventTime.Location().String())
+	}
+}
+
+func TestGetByID_AutoEndExpiredActivity(t *testing.T) {
+	repo := newMockActivityRepo()
+	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+
+	// Create an activity with an event time in the past (1 hour ago)
+	input := service.CreateActivityInput{
+		Title:     "Past Activity",
+		EventTime: time.Now().Add(-1 * time.Hour).UTC().Format(time.RFC3339),
+	}
+
+	created, err := svc.Create(1, input)
+	if err != nil {
+		t.Fatalf("Create failed: %v", err)
+	}
+
+	if created.Status != "open" {
+		t.Fatalf("initial status = %q, want 'open'", created.Status)
+	}
+
+	// GetByID should auto-transition to ended
+	fetched, err := svc.GetByID(created.ID)
+	if err != nil {
+		t.Fatalf("GetByID failed: %v", err)
+	}
+	if fetched.Status != "ended" {
+		t.Errorf("status after GetByID = %q, want 'ended'", fetched.Status)
 	}
 }

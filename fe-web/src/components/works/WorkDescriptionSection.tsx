@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Check } from 'lucide-react';
 
+import { formatRelativeTime } from '../../utils/dateUtils';
+
 interface WorkDescriptionSectionProps {
     description: string;
+    createdAt: string;
     isEditing: boolean;
     onSave: (newDescription: string) => void;
     onCancelEdit: () => void;
@@ -10,6 +13,7 @@ interface WorkDescriptionSectionProps {
 
 const WorkDescriptionSection: React.FC<WorkDescriptionSectionProps> = ({
     description,
+    createdAt,
     isEditing,
     onSave,
     onCancelEdit
@@ -78,7 +82,7 @@ const WorkDescriptionSection: React.FC<WorkDescriptionSectionProps> = ({
                     <p className="text-sm text-[#191919] leading-relaxed text-left whitespace-pre-wrap">
                         {renderDescription(description)}
                     </p>
-                    <p className="text-xs text-[#999999] mt-2 text-left">3天前</p>
+                    <p className="text-xs text-[#999999] mt-2 text-left">{formatRelativeTime(createdAt)}</p>
                 </>
             )}
         </div>

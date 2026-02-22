@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Eye, EyeOff } from 'lucide-react';
+import { authService } from '../../services/authService';
 
 interface RegisterFormProps {
     onGenericClick?: () => void; // For "Back" functionality
@@ -22,9 +23,61 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onGenericClick, onSubmit, o
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = () => {
-        onSubmit?.(formData);
+    const [isSuccess, setIsSuccess] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+    const [isResending, setIsResending] = useState(false);
+
+    const handleResend = async () => {
+        setIsResending(true);
+        try {
+            await authService.resendVerification(formData.email);
+            alert('驗證信已重新發送！');
+        } catch (error: any) {
+            const message = error?.message || '發送失敗，請稍後再試';
+            alert(message);
+        } finally {
+            setIsResending(false);
+        }
     };
+
+    const handleSubmit = async () => {
+        if (!onSubmit) return;
+        setErrorMessage('');
+        try {
+            await onSubmit(formData);
+            setIsSuccess(true);
+        } catch (error: any) {
+            const message = error?.response?.data?.message || error?.message || '註冊失敗';
+            setErrorMessage(message);
+        }
+    };
+
+    if (isSuccess) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center font-sans">
+                <div className="absolute inset-0 bg-[#0a0a0a]/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
+                <div className="relative w-full max-w-[600px] bg-white rounded-[32px] flex flex-col items-center shadow-2xl p-12 mx-4 animate-fade-in-up min-h-[400px] justify-center text-center">
+                    <h2 className="text-2xl font-bold text-[#191919] mb-4">註冊成功！</h2>
+                    <p className="text-gray-600 mb-8">驗證信已發送至 {formData.email}<br />請前往信箱點擊連結以啟用帳號。</p>
+                    <div className="flex flex-col gap-3 items-center">
+                        <button
+                            onClick={onClose}
+                            className="w-[140px] h-[50px] rounded-full bg-[#009bcd] text-white font-bold text-lg hover:bg-[#0089b6] transition-colors"
+                        >
+                            我知道了
+                        </button>
+                        <button
+                            onClick={handleResend}
+                            disabled={isResending}
+                            className={`text-[#009bcd] text-sm underline hover:text-[#0089b6] transition-colors ${isResending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                            {isResending ? '發送中...' : '沒收到驗證信？重新發送'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center font-sans">
@@ -67,6 +120,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onGenericClick, onSubmit, o
 
                 {/* Form Section */}
                 <div className="w-full max-w-[320px] flex flex-col gap-5">
+                    {/* Error Message */}
+                    {errorMessage && (
+                        <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-2 rounded-lg text-sm">
+                            {errorMessage}
+                        </div>
+                    )}
                     {/* Email Input */}
                     <div className="flex flex-col gap-2">
                         <label className="text-base font-bold text-[#191919] ml-1">註冊信箱</label>

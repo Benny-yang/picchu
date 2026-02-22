@@ -102,7 +102,7 @@ const UserInfo: React.FC<UserInfoProps> = ({
                                 title="查看評價紀錄"
                             >
                                 <Star size={currentSize.ratingIcon} className="fill-[#FFAF3C] text-[#FFAF3C]" />
-                                <span className="font-bold text-[#191919]">{rating}</span>
+                                <span className="font-bold text-[#191919]">{rating.toFixed(1)}</span>
                             </div>
                         )}
                     </div>
@@ -115,7 +115,7 @@ const UserInfo: React.FC<UserInfoProps> = ({
                 onClose={() => setIsReviewModalOpen(false)}
                 username={name}
                 userId={userId}
-                totalRating={rating?.toString() || "0.0"}
+                totalRating={rating?.toFixed(1) || "0.0"}
             />
         </>
     );

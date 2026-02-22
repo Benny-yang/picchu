@@ -1,22 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { notificationService } from '../../services/notificationService';
 import { User } from 'lucide-react'; // Import User icon
-
-interface Notification {
-    id: number;
-    type: string;
-    content: string; // Activity Title or other content snapshot
-    referenceId: string;
-    time: string;
-    isRead: boolean;
-    actor?: {
-        id: number;
-        username: string;
-        profile?: {
-            avatarUrl: string;
-        }
-    };
-}
+import type { Notification } from '../../types';
 
 interface NotificationDropdownProps {
     isOpen: boolean;

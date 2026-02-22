@@ -1,15 +1,13 @@
 package service
 
 import (
-	"encoding/base64"
-	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
 	"azure-magnetar/internal/model"
 	"azure-magnetar/internal/repository"
+	"azure-magnetar/pkg/apperror"
+	"azure-magnetar/pkg/storage"
 )
 
 // ActivityService defines the interface for activity-related business logic.
@@ -83,18 +81,25 @@ type UpdateApplicantStatusInput struct {
 type activityService struct {
 	repo         repository.ActivityRepository
 	notifService NotificationService
+	ratingRepo   repository.RatingRepository
+	apiBaseURL   string
 }
 
 // NewActivityService creates a new ActivityService.
-func NewActivityService(repo repository.ActivityRepository, notifService NotificationService) ActivityService {
-	return &activityService{repo: repo, notifService: notifService}
+func NewActivityService(repo repository.ActivityRepository, notifService NotificationService, ratingRepo repository.RatingRepository, apiBaseURL string) ActivityService {
+	return &activityService{
+		repo:         repo,
+		notifService: notifService,
+		ratingRepo:   ratingRepo,
+		apiBaseURL:   apiBaseURL,
+	}
 }
 
 func (s *activityService) Create(hostID uint, input CreateActivityInput) (*model.Activity, error) {
 	var imageURLs []string
 	if len(input.Images) > 0 {
 		for i, imgBase64 := range input.Images {
-			url, err := saveActivityImageFromBase64(hostID, imgBase64, i)
+			url, err := storage.SaveBase64Image(s.apiBaseURL, "activities", hostID, imgBase64, i)
 			if err != nil {
 				return nil, fmt.Errorf("failed to save image: %w", err)
 			}
@@ -132,17 +137,47 @@ func (s *activityService) Create(hostID uint, input CreateActivityInput) (*model
 }
 
 func (s *activityService) GetByID(id uint) (*model.Activity, error) {
-	return s.repo.GetByID(id)
+	activity, err := s.repo.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	s.autoEndIfExpired(activity)
+
+	// Populate host's average rating (gorm:"-" field, not loaded by preload)
+	if avg, err := s.ratingRepo.GetAverageByUserID(activity.HostID); err == nil {
+		activity.Host.AverageRating = avg
+	}
+
+	return activity, nil
+}
+
+// autoEndIfExpired checks if an activity's event time has passed and
+// transitions its status to "ended" if it's still "open" or "full".
+func (s *activityService) autoEndIfExpired(activity *model.Activity) {
+	if activity == nil {
+		return
+	}
+	if activity.Status != "open" && activity.Status != "full" {
+		return
+	}
+	if activity.EventTime.IsZero() {
+		return
+	}
+	if time.Now().UTC().After(activity.EventTime.UTC()) {
+		activity.Status = "ended"
+		_ = s.repo.Update(activity)
+	}
 }
 
 func (s *activityService) Update(userID, activityID uint, input UpdateActivityInput) (*model.Activity, error) {
 	activity, err := s.repo.GetByID(activityID)
 	if err != nil {
-		return nil, errors.New("activity not found")
+		return nil, apperror.New(apperror.CodeNotFound, "activity not found")
 	}
 	// Verify host
 	if activity.HostID != userID {
-		return nil, errors.New("only the host can update this activity")
+		return nil, apperror.New(apperror.CodeForbidden, "only the host can update this activity")
 	}
 
 	if input.Title != "" {
@@ -180,7 +215,7 @@ func (s *activityService) Update(userID, activityID uint, input UpdateActivityIn
 			}
 
 			// Otherwise treat as new base64 image
-			url, err := saveActivityImageFromBase64(userID, imgStr, i)
+			url, err := storage.SaveBase64Image(s.apiBaseURL, "activities", userID, imgStr, i)
 			if err != nil {
 				return nil, fmt.Errorf("failed to save image: %w", err)
 			}
@@ -205,20 +240,20 @@ func (s *activityService) Update(userID, activityID uint, input UpdateActivityIn
 func (s *activityService) Cancel(userID, activityID uint, reason string) error {
 	activity, err := s.repo.GetByID(activityID)
 	if err != nil {
-		return errors.New("activity not found")
+		return apperror.New(apperror.CodeNotFound, "activity not found")
 	}
 
 	if activity.HostID != userID {
-		return errors.New("only the host can cancel this activity")
+		return apperror.New(apperror.CodeForbidden, "only the host can cancel this activity")
 	}
 
 	if activity.Status == "cancelled" {
-		return errors.New("activity is already cancelled")
+		return apperror.New(apperror.CodeConflict, "activity is already cancelled")
 	}
 
 	// Check if within 12 hours of start time
 	if time.Now().Add(12 * time.Hour).After(activity.EventTime) {
-		return errors.New("活動開始前 12 小時內無法取消")
+		return apperror.New(apperror.CodeValidation, "活動開始前 12 小時內無法取消")
 	}
 
 	// Update status
@@ -245,22 +280,36 @@ func (s *activityService) Cancel(userID, activityID uint, reason string) error {
 func (s *activityService) Delete(userID, activityID uint) error {
 	activity, err := s.repo.GetByID(activityID)
 	if err != nil {
-		return errors.New("activity not found")
+		return apperror.New(apperror.CodeNotFound, "activity not found")
 	}
 
 	if activity.HostID != userID {
-		return errors.New("only the host can delete this activity")
+		return apperror.New(apperror.CodeForbidden, "only the host can delete this activity")
 	}
 
 	return s.repo.Delete(activityID)
 }
 
 func (s *activityService) List(filter repository.ActivityFilter) ([]model.Activity, int64, error) {
-	return s.repo.List(filter)
+	activities, total, err := s.repo.List(filter)
+	if err != nil {
+		return nil, 0, err
+	}
+	for i := range activities {
+		s.autoEndIfExpired(&activities[i])
+	}
+	return activities, total, nil
 }
 
 func (s *activityService) GetByUserID(userID uint) ([]model.Activity, error) {
-	return s.repo.GetByUserID(userID)
+	activities, err := s.repo.GetByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+	for i := range activities {
+		s.autoEndIfExpired(&activities[i])
+	}
+	return activities, nil
 }
 
 // --- Participation ---
@@ -268,11 +317,11 @@ func (s *activityService) GetByUserID(userID uint) ([]model.Activity, error) {
 func (s *activityService) Apply(activityID, userID uint, message string) error {
 	activity, err := s.repo.GetByID(activityID)
 	if err != nil {
-		return errors.New("activity not found")
+		return apperror.New(apperror.CodeNotFound, "activity not found")
 	}
 
 	if activity.HostID == userID {
-		return errors.New("host cannot apply to their own activity")
+		return apperror.New(apperror.CodeConflict, "host cannot apply to their own activity")
 	}
 
 	// Sync status with reality (Self-healing)
@@ -288,11 +337,11 @@ func (s *activityService) Apply(activityID, userID uint, message string) error {
 	}
 
 	if activity.Status != "open" {
-		return errors.New("activity is not open for applications")
+		return apperror.New(apperror.CodeConflict, "activity is not open for applications")
 	}
 
 	if existing, _ := s.repo.GetParticipant(activityID, userID); existing != nil {
-		return errors.New("already applied to this activity")
+		return apperror.New(apperror.CodeConflict, "already applied to this activity")
 	}
 
 	participant := &model.ActivityParticipant{
@@ -321,7 +370,7 @@ func (s *activityService) InviteUser(activityID, hostID, targetID uint, message 
 
 	// 2. Check if hostID is the owner
 	if activity.HostID != hostID {
-		return errors.New("only the host can invite users")
+		return apperror.New(apperror.CodeForbidden, "only the host can invite users")
 	}
 
 	// 3. Send Notification
@@ -345,7 +394,7 @@ func (s *activityService) RejectApplicant(activityID, hostID, applicantID uint) 
 func (s *activityService) GetUserStatus(activityID, userID uint) (string, error) {
 	activity, err := s.repo.GetByID(activityID)
 	if err != nil {
-		return "", errors.New("activity not found")
+		return "", apperror.New(apperror.CodeNotFound, "activity not found")
 	}
 
 	if activity.HostID == userID {
@@ -365,33 +414,45 @@ func (s *activityService) GetUserStatus(activityID, userID uint) (string, error)
 func (s *activityService) ListApplicants(activityID, hostID uint) ([]model.ActivityParticipant, error) {
 	activity, err := s.repo.GetByID(activityID)
 	if err != nil {
-		return nil, errors.New("activity not found")
+		return nil, apperror.New(apperror.CodeNotFound, "activity not found")
 	}
 
 	if activity.HostID != hostID {
-		return nil, errors.New("only the host can view applicants")
+		return nil, apperror.New(apperror.CodeForbidden, "only the host can view applicants")
 	}
 
-	return s.repo.ListApplicants(activityID)
+	applicants, err := s.repo.ListApplicants(activityID)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range applicants {
+		// Populate average rating
+		if avg, err := s.ratingRepo.GetAverageByUserID(applicants[i].UserID); err == nil {
+			applicants[i].User.AverageRating = avg
+		}
+	}
+
+	return applicants, nil
 }
 
 func (s *activityService) UpdateApplicantStatus(activityID, hostID, applicantUserID uint, status string) error {
 	if status != "accepted" && status != "rejected" {
-		return errors.New("status must be 'accepted' or 'rejected'")
+		return apperror.New(apperror.CodeValidation, "status must be 'accepted' or 'rejected'")
 	}
 
 	activity, err := s.repo.GetByID(activityID)
 	if err != nil {
-		return errors.New("activity not found")
+		return apperror.New(apperror.CodeNotFound, "activity not found")
 	}
 
 	if activity.HostID != hostID {
-		return errors.New("only the host can manage applicants")
+		return apperror.New(apperror.CodeForbidden, "only the host can manage applicants")
 	}
 
 	participant, err := s.repo.GetParticipant(activityID, applicantUserID)
 	if err != nil {
-		return errors.New("applicant not found")
+		return apperror.New(apperror.CodeNotFound, "applicant not found")
 	}
 
 	if err := s.repo.UpdateParticipantStatus(participant.ID, status); err != nil {
@@ -414,7 +475,19 @@ func (s *activityService) UpdateApplicantStatus(activityID, hostID, applicantUse
 }
 
 func (s *activityService) ListParticipants(activityID uint) ([]model.ActivityParticipant, error) {
-	return s.repo.ListParticipants(activityID)
+	participants, err := s.repo.ListParticipants(activityID)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range participants {
+		// Populate average rating (calculated on the fly)
+		if avg, err := s.ratingRepo.GetAverageByUserID(participants[i].UserID); err == nil {
+			participants[i].User.AverageRating = avg
+		}
+	}
+
+	return participants, nil
 }
 
 func (s *activityService) GetMyApplications(userID uint) ([]model.ActivityParticipant, error) {
@@ -425,6 +498,7 @@ func (s *activityService) GetMyApplications(userID uint) ([]model.ActivityPartic
 func parseEventTime(timeStr string) (time.Time, error) {
 	formats := []string{
 		time.RFC3339,
+		"2006-01-02T15:04:05Z07:00", // Explicit ISO8601
 		"2006-01-02T15:04:05",
 		"2006-01-02 15:04:05",
 		"2006-01-02 15:04",
@@ -433,40 +507,10 @@ func parseEventTime(timeStr string) (time.Time, error) {
 
 	for _, format := range formats {
 		if t, err := time.Parse(format, timeStr); err == nil {
+			// Return original time with its location (don't force UTC)
 			return t, nil
 		}
 	}
 
 	return time.Time{}, fmt.Errorf("unsupported time format: %s", timeStr)
-}
-
-// Helper to save activity images
-func saveActivityImageFromBase64(userID uint, base64Data string, index int) (string, error) {
-	if base64Data == "" {
-		return "", nil
-	}
-
-	// Generate unique filename
-	fileName := fmt.Sprintf("activity_%d_%d_%d.jpg", userID, time.Now().Unix(), index)
-	filePath := filepath.Join("uploads", "activities", fileName)
-
-	// Ensure directory exists
-	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
-		return "", fmt.Errorf("failed to create activity directory: %w", err)
-	}
-
-	// Decode base64
-	data, err := base64.StdEncoding.DecodeString(base64Data)
-	if err != nil {
-		return "", errors.New("invalid base64 image data")
-	}
-
-	// Write file
-	if err := os.WriteFile(filePath, data, 0644); err != nil {
-		return "", fmt.Errorf("failed to save activity image: %w", err)
-	}
-
-	// Return full URL
-	// NOTE: Hardcoded localhost for dev, same as WorkService
-	return fmt.Sprintf("http://localhost:8080/uploads/activities/%s", fileName), nil
 }

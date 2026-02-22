@@ -1,11 +1,12 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 
 	"azure-magnetar/internal/model"
 	"azure-magnetar/internal/repository"
+	"azure-magnetar/pkg/apperror"
+	"azure-magnetar/pkg/logger"
 )
 
 // LikeService defines the interface for like-related business logic.
@@ -30,7 +31,7 @@ func (s *likeService) LikeWork(userID, workID uint) error {
 		return err
 	}
 	if isLiked {
-		return errors.New("already liked this work")
+		return apperror.New(apperror.CodeConflict, "already liked this work")
 	}
 
 	like := &model.Like{
@@ -43,7 +44,7 @@ func (s *likeService) LikeWork(userID, workID uint) error {
 	}
 
 	if err := s.workRepo.IncrementLikeCount(workID); err != nil {
-		fmt.Printf("warning: failed to increment like count for work %d: %v\n", workID, err)
+		logger.Warn("failed to increment like count", "workID", workID, "error", err)
 	}
 
 	return nil
@@ -55,7 +56,7 @@ func (s *likeService) UnlikeWork(userID, workID uint) error {
 		return err
 	}
 	if !isLiked {
-		return errors.New("not liked this work")
+		return apperror.New(apperror.CodeConflict, "not liked this work")
 	}
 
 	if err := s.likeRepo.Delete(userID, workID); err != nil {
@@ -63,7 +64,7 @@ func (s *likeService) UnlikeWork(userID, workID uint) error {
 	}
 
 	if err := s.workRepo.DecrementLikeCount(workID); err != nil {
-		fmt.Printf("warning: failed to decrement like count for work %d: %v\n", workID, err)
+		logger.Warn("failed to decrement like count", "workID", workID, "error", err)
 	}
 
 	return nil

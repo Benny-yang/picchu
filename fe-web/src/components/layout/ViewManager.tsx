@@ -14,9 +14,10 @@ import CreateActivityPage from '../../pages/CreateActivityPage';
 import SettingsPage from '../../pages/SettingsPage';
 import ActivityApplicationHistoryPage from '../../pages/ActivityApplicationHistoryPage';
 import NotFoundPage from '../../pages/NotFoundPage';
+import ResetPasswordPage from '../../pages/ResetPasswordPage';
 import { authService } from '../../services/authService';
 
-type AuthView = 'selection' | 'login' | 'register' | 'phone-input' | 'sms-verify' | 'sms-success' | 'sms-fail' | 'basic-info' | 'works-wall' | 'activities' | 'create-activity' | 'profile' | 'edit-profile' | 'settings' | 'activity-application-history' | '404';
+export type AuthView = 'selection' | 'login' | 'register' | 'phone-input' | 'sms-verify' | 'sms-success' | 'sms-fail' | 'basic-info' | 'works-wall' | 'activities' | 'create-activity' | 'profile' | 'edit-profile' | 'settings' | 'activity-application-history' | 'reset-password' | '404';
 
 interface ViewManagerProps {
     view: AuthView;
@@ -45,7 +46,17 @@ const ViewManager: React.FC<ViewManagerProps> = ({
         // authService.login already saves token via tokenManager
         const userData = response.data?.user || response.data || response;
         setCurrentUser(userData);
-        setView('works-wall');
+
+        // Check if this is a first login after email verification
+        const isFirstLogin = sessionStorage.getItem('first_login') === 'true';
+
+        if (isFirstLogin) {
+            sessionStorage.removeItem('first_login');
+            window.history.replaceState({}, '', window.location.pathname);
+            setView('edit-profile');
+        } else {
+            setView('works-wall');
+        }
     };
 
 
@@ -69,13 +80,8 @@ const ViewManager: React.FC<ViewManagerProps> = ({
                     onClose={handleClose}
                     onGenericClick={() => setView('selection')}
                     onSubmit={async (data) => {
-                        try {
-                            const response = await authService.login(data.email, data.password);
-                            handleLoginSuccess(response);
-                        } catch (error: any) {
-                            console.error(error);
-                            alert('登入失敗');
-                        }
+                        const response = await authService.login(data.email, data.password, data.rememberMe);
+                        handleLoginSuccess(response);
                     }}
                 />
             );
@@ -85,21 +91,12 @@ const ViewManager: React.FC<ViewManagerProps> = ({
                     onClose={handleClose}
                     onGenericClick={() => setView('selection')}
                     onSubmit={async (data) => {
-                        try {
-                            if (data.password !== data.confirmPassword) {
-                                alert('密碼與確認密碼不符');
-                                return;
-                            }
-                            await authService.register(data.email, data.password);
-                            const loginResponse = await authService.login(data.email, data.password);
-                            const userData = loginResponse.data?.user || loginResponse.data || loginResponse;
-                            setCurrentUser(userData);
-                            alert('註冊成功！請填寫基本資料');
-                            setView('basic-info');
-                        } catch (error: any) {
-                            console.error('Registration/Login failed:', error);
-                            alert('註冊失敗：' + (error.message || '未知錯誤'));
+                        if (data.password !== data.confirmPassword) {
+                            throw new Error('密碼與確認密碼不符');
                         }
+                        await authService.register(data.email, data.password);
+                        // Registration successful — RegisterForm will show "check email" UI
+                        // Do NOT try to login here, user must verify email first
                     }}
                 />
             );
@@ -200,6 +197,7 @@ const ViewManager: React.FC<ViewManagerProps> = ({
         case 'profile': return <div className="w-full h-full"><UserProfilePage currentUser={currentUser} /></div>;
         case 'settings': return <div className="w-full h-full"><SettingsPage currentUser={currentUser} setCurrentUser={setCurrentUser} /></div>;
         case 'activity-application-history': return <div className="w-full h-full"><ActivityApplicationHistoryPage currentUser={currentUser} /></div>;
+        case 'reset-password': return <ResetPasswordPage onNavigate={setView} />;
         case '404':
         default:
             return <NotFoundPage />;

@@ -1,25 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { X, Star } from 'lucide-react';
 import { activityService } from '../../services/activityService';
+import { IMG_BASE_URL } from '../../config';
+import type { Applicant } from '../../types';
 
 interface ApplicationManagementModalProps {
     isOpen: boolean;
     onClose: () => void;
     activityId?: number;
-}
-
-interface Applicant {
-    id: string; // This is UserId, but for UI mapping we might want ParticipantID for updates? 
-    // Actually updateApplicantStatus takes (activityId, userId, status). 
-    // So distinct IDs needed: userId for API, and maybe participantId for key?
-    // Let's keep it simple: id is userId.
-    userId: number;
-    username: string;
-    avatar: string;
-    role: string;
-    rating: number;
-    status: 'pending' | 'accepted' | 'rejected';
-    message: string;
 }
 
 const ApplicationManagementModal: React.FC<ApplicationManagementModalProps> = ({ isOpen, onClose, activityId }) => {
@@ -59,7 +47,7 @@ const ApplicationManagementModal: React.FC<ApplicationManagementModalProps> = ({
                             id: String(item.user?.id),
                             userId: item.user?.id,
                             username: item.user?.username || 'Unknown',
-                            avatar: profile?.avatarUrl ? (profile.avatarUrl.startsWith('http') ? profile.avatarUrl : `http://localhost:8080/${profile.avatarUrl}`) : '',
+                            avatar: profile?.avatarUrl ? (profile.avatarUrl.startsWith('http') ? profile.avatarUrl : `${IMG_BASE_URL}/${profile.avatarUrl}`) : '',
                             role: displayRole,
                             rating: item.user?.averageRating || 0,
                             status: item.status,
@@ -99,8 +87,8 @@ const ApplicationManagementModal: React.FC<ApplicationManagementModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl w-full max-w-4xl h-[600px] overflow-hidden flex shadow-2xl relative">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={onClose}>
+            <div className="bg-white rounded-xl w-full max-w-4xl h-[600px] overflow-hidden flex shadow-2xl relative" onClick={(e) => e.stopPropagation()}>
 
                 {/* Close Button Mobile - showing generally on top right of modal */}
                 <button
@@ -181,7 +169,15 @@ const ApplicationManagementModal: React.FC<ApplicationManagementModalProps> = ({
                     {selectedApplicant ? (
                         <div className="flex-1 p-8 flex flex-col items-center">
                             {/* User Profile */}
-                            <div className="flex flex-col items-center mb-8">
+                            <div
+                                className="flex flex-col items-center mb-8 cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => {
+                                    if (selectedApplicant.userId) {
+                                        window.location.href = `?view=profile&uid=${selectedApplicant.userId}`;
+                                    }
+                                }}
+                                title="前往使用者主頁"
+                            >
                                 <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200 mb-3 ring-4 ring-gray-50">
                                     {selectedApplicant.avatar ? (
                                         <img src={selectedApplicant.avatar} alt={selectedApplicant.username} className="w-full h-full object-cover" />
@@ -191,7 +187,7 @@ const ApplicationManagementModal: React.FC<ApplicationManagementModalProps> = ({
                                         </div>
                                     )}
                                 </div>
-                                <h3 className="text-xl font-bold text-[#191919] mb-1">{selectedApplicant.username}</h3>
+                                <h3 className="text-xl font-bold text-[#191919] mb-1 hover:underline">{selectedApplicant.username}</h3>
                                 <div className="flex items-center gap-2 text-sm text-gray-500">
                                     <span>{selectedApplicant.role}</span>
                                     <div className="flex items-center text-yellow-500">

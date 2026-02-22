@@ -1,14 +1,6 @@
 import api from './api';
 import { handleApiError } from './serviceUtils';
-
-export interface ActivityFilter {
-    location?: string;
-    dateFrom?: string;
-    dateTo?: string;
-    tags?: string;
-    offset?: number;
-    limit?: number;
-}
+import type { ActivityFilter } from '../types';
 
 export const activityService = {
     list: async (filter?: ActivityFilter): Promise<{ data: any[]; total: number }> => {

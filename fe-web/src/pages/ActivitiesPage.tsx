@@ -29,8 +29,14 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ currentUser }) => {
                     setActivities([]);
                 }
             } else {
-                const result = await activityService.list();
-                setActivities(result.data);
+                const result = await activityService.list({
+                    dateFrom: new Date().toISOString()
+                });
+                // Filter out ended and cancelled activities
+                const activeActivities = (result.data || []).filter((a: any) =>
+                    a.status !== 'ended' && a.status !== 'cancelled'
+                );
+                setActivities(activeActivities);
             }
         } catch (error) {
             console.error('Failed to fetch activities:', error);
@@ -94,7 +100,16 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ currentUser }) => {
                                     image: activity.coverUrl || activity.images?.[0] || '',
                                     userAvatar: activity.host?.avatarUrl || '',
                                     tags: activity.tags?.split(',') || [],
-                                    date: activity.eventTime?.replace('T', ' ').slice(0, 16) || '',
+                                    date: activity.eventTime
+                                        ? new Date(activity.eventTime).toLocaleString('zh-TW', {
+                                            hour12: false,
+                                            year: 'numeric',
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                        })
+                                        : '',
                                 }}
                                 onClick={() => setSelectedActivity(activity)}
                             />

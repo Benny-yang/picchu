@@ -1,20 +1,8 @@
 import React, { useState } from 'react';
+import { formatRelativeTime } from '../../utils/dateUtils';
 import { Heart, User } from 'lucide-react';
 // import { DEFAULT_AVATAR } from '../layout/MainHeader'; // Removed unused import
-
-interface Comment {
-    id: number;
-    userId: number;
-    user: {
-        username: string;
-        avatarUrl?: string;
-        profile?: {
-            avatarUrl?: string;
-        };
-    };
-    content: string;
-    createdAt: string;
-}
+import type { Comment } from '../../types';
 
 interface WorkCommentsSectionProps {
     isLiked: boolean;
@@ -42,19 +30,7 @@ const WorkCommentsSection: React.FC<WorkCommentsSectionProps> = ({
     };
 
     const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diff = now.getTime() - date.getTime();
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-        if (days > 7) return date.toLocaleDateString();
-        if (days > 0) return `${days}天前`;
-
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        if (hours > 0) return `${hours}小時前`;
-
-        const minutes = Math.floor(diff / (1000 * 60));
-        return `${minutes}分鐘前`;
+        return formatRelativeTime(dateString);
     };
 
     const getAvatarUrl = (user: Comment['user']) => {

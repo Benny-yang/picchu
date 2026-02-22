@@ -1,13 +1,16 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"azure-magnetar/config"
 	"azure-magnetar/internal/middleware"
 	"azure-magnetar/internal/service"
 	"azure-magnetar/pkg/auth"
+	"azure-magnetar/pkg/logger"
 	"azure-magnetar/pkg/response"
 
 	"github.com/gin-gonic/gin"
@@ -50,8 +53,9 @@ type RegisterInput struct {
 
 // LoginInput represents the login request body.
 type LoginInput struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required"`
+	Email      string `json:"email" binding:"required,email"`
+	Password   string `json:"password" binding:"required"`
+	RememberMe bool   `json:"rememberMe"`
 }
 
 // LoginResponse is returned on successful login.
@@ -81,15 +85,11 @@ func (h *UserHandler) Register(c *gin.Context) {
 	}
 
 	if err := h.userService.Register(input.Email, input.Password); err != nil {
-		if err.Error() == "此 email 已註冊" {
-			response.Error(c, http.StatusBadRequest, err.Error())
-		} else {
-			response.Error(c, http.StatusInternalServerError, err.Error())
-		}
+		HandleServiceError(c, err)
 		return
 	}
 
-	response.Success(c, "Account created successfully")
+	response.Success(c, "Registration successful. Please check your email to verify your account.")
 }
 
 // Login godoc
@@ -112,12 +112,17 @@ func (h *UserHandler) Login(c *gin.Context) {
 
 	user, err := h.userService.Login(input.Email, input.Password)
 	if err != nil {
-		response.Error(c, http.StatusUnauthorized, err.Error())
+		HandleServiceError(c, err)
 		return
 	}
 
 	cfg := config.LoadConfig()
-	token, err := auth.GenerateToken(user.ID, cfg.JWTSecret)
+	duration := auth.TokenExpiry
+	if input.RememberMe {
+		duration = 30 * 24 * time.Hour
+	}
+
+	token, err := auth.GenerateToken(user.ID, cfg.JWTSecret, duration)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "failed to generate token")
 		return
@@ -317,4 +322,117 @@ func parseIDParam(c *gin.Context, paramName string) (uint, error) {
 		return 0, err
 	}
 	return uint(id), nil
+}
+
+// ForgotPasswordInput represents the request body for forgot password.
+type ForgotPasswordInput struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+// ResetPasswordInput represents the request body for reset password.
+type ResetPasswordInput struct {
+	Token       string `json:"token" binding:"required"`
+	NewPassword string `json:"newPassword" binding:"required,min=6"`
+}
+
+// ForgotPassword godoc
+// @Summary      Request password reset
+// @Description  Send a password reset email to the user
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        input body ForgotPasswordInput true "Email"
+// @Success      200  {object}  response.Response
+// @Failure      400  {object}  response.Response
+// @Failure      500  {object}  response.Response
+// @Router       /auth/forgot-password [post]
+func (h *UserHandler) ForgotPassword(c *gin.Context) {
+	var input ForgotPasswordInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// ALWAYS return success to prevent email enumeration
+	if err := h.userService.ForgotPassword(input.Email); err != nil {
+		logger.Error("ForgotPassword failed", "email", input.Email, "error", err)
+	}
+
+	response.Success(c, "If the email exists, a password reset link has been sent.")
+}
+
+// ResetPassword godoc
+// @Summary      Reset password
+// @Description  Reset user password using a valid token
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        input body ResetPasswordInput true "Reset Data"
+// @Success      200  {object}  response.Response
+// @Failure      400  {object}  response.Response
+// @Failure      500  {object}  response.Response
+// @Router       /auth/reset-password [post]
+func (h *UserHandler) ResetPassword(c *gin.Context) {
+	var input ResetPasswordInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := h.userService.ResetPassword(input.Token, input.NewPassword); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error()) // Or 400 if token invalid
+		return
+	}
+
+	response.Success(c, "Password has been reset successfully.")
+}
+
+// VerifyEmail godoc
+// @Summary      Verify email
+// @Description  Verify user email with token
+// @Tags         auth
+// @Produce      json
+// @Param        token query string true "Verification Token"
+// @Success      302
+// @Failure      400  {object}  response.Response
+// @Router       /auth/verify [get]
+func (h *UserHandler) VerifyEmail(c *gin.Context) {
+	token := c.Query("token")
+	if token == "" {
+		response.Error(c, http.StatusBadRequest, "token is required")
+		return
+	}
+
+	if err := h.userService.VerifyEmail(token); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	frontendURL := config.LoadConfig().FrontendURL
+	c.Redirect(http.StatusFound, fmt.Sprintf("%s?view=login&verified=true&first_login=true", frontendURL))
+}
+
+// ResendVerification godoc
+// @Summary      Resend verification email
+// @Description  Resend verification email to the user
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        input body ForgotPasswordInput true "Email"
+// @Success      200  {object}  response.Response
+// @Failure      400  {object}  response.Response
+// @Router       /auth/resend-verification [post]
+func (h *UserHandler) ResendVerification(c *gin.Context) {
+	var input ForgotPasswordInput // Reuse struct containing Email
+	if err := c.ShouldBindJSON(&input); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := h.userService.ResendVerification(input.Email); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.Success(c, "Verification email sent.")
 }

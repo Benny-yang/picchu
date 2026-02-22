@@ -8,7 +8,10 @@ Dating app backend built with **Go (Gin + GORM + MySQL)**.
 # Set environment variables
 export DSN="user:password@tcp(localhost:3306)/azure_magnetar?charset=utf8mb4&parseTime=True&loc=Local"
 export JWT_SECRET="your-production-secret"
+export RESEND_API_KEY="your-resend-api-key"
 export PORT=8080
+export API_BASE_URL="https://your-api-domain.com"   # Defaults to http://localhost:$PORT
+export FRONTEND_URL="https://your-frontend-domain.com" # Defaults to http://localhost:5173
 
 # Run
 go run ./cmd/server/
@@ -92,10 +95,14 @@ internal/
   middleware/        → JWT auth middleware
 pkg/
   auth/              → JWT token utilities
+  apperror/          → Domain error types (typed errors with HTTP mapping)
   database/          → DB connection
   response/          → API response helpers
-  utils/             → Password hashing
-config/              → Config loading
+  email/             → Email sending (Brevo API)
+  logger/            → Structured logging (JSON, slog-based)
+  storage/           → File storage (Base64 image decoding & saving)
+  utils/             → Password hashing, secure token generation
+config/              → Config loading (env vars)
 ```
 
 ## Swagger

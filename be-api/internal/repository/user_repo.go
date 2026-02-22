@@ -2,6 +2,7 @@ package repository
 
 import (
 	"azure-magnetar/internal/model"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -11,11 +12,13 @@ type UserRepository interface {
 	GetByID(id uint) (*model.User, error)
 	GetByUsername(username string) (*model.User, error)
 	GetByEmail(email string) (*model.User, error)
+	GetByVerificationToken(token string) (*model.User, error)
+	GetByResetToken(token string) (*model.User, error)
 	GetAll() ([]model.User, error)
 	GetProfileByUserID(userID uint) (*model.UserProfile, error)
 	UpdateProfile(profile *model.UserProfile) error
 	UpdateUser(user *model.User) error
-} // end of interface
+}
 
 type userRepository struct {
 	db *gorm.DB
@@ -48,6 +51,23 @@ func (r *userRepository) GetByUsername(username string) (*model.User, error) {
 func (r *userRepository) GetByEmail(email string) (*model.User, error) {
 	var user model.User
 	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *userRepository) GetByVerificationToken(token string) (*model.User, error) {
+	var user model.User
+	if err := r.db.Where("verification_token = ?", token).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *userRepository) GetByResetToken(token string) (*model.User, error) {
+	var user model.User
+	// Check for token match and expiry valid (expiry > now)
+	if err := r.db.Where("reset_token = ? AND reset_token_expiry > ?", token, time.Now()).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil

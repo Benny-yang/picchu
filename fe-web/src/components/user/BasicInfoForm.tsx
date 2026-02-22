@@ -49,9 +49,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ onSubmit, initialData }) 
         });
     };
 
-    const handleGenderSelect = (gender: string) => {
-        setFormData(prev => ({ ...prev, gender }));
-    };
+
 
     return (
         <div className="w-[616px] bg-white rounded-[16px] shadow-sm border border-[#e6e6e6] pt-[40px] px-[80px] pb-[40px] mx-auto my-8 relative flex flex-col items-center" >

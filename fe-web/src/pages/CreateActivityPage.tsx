@@ -299,7 +299,7 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
                                     onBlur={(e) => {
                                         if (!e.target.value) e.target.type = "text";
                                     }}
-                                    min={new Date().toISOString().split('T')[0]}
+                                    min={(() => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`; })()}
                                     value={formData.date}
                                     onChange={handleChange}
                                     className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#009bcd] transition-all bg-gray-50 hover:bg-white placeholder-gray-400"
@@ -322,9 +322,12 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
                                         const hour = i.toString().padStart(2, '0');
                                         return [`${hour}:00`, `${hour}:30`];
                                     }).filter(time => {
-                                        // If date is today, filter out past times
-                                        if (formData.date === new Date().toISOString().split('T')[0]) {
-                                            const now = new Date();
+                                        // In edit mode, show all times so user can keep existing time
+                                        if (isEditMode) return true;
+                                        // If date is today, filter out past times (use local date)
+                                        const now = new Date();
+                                        const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                                        if (formData.date === todayLocal) {
                                             const [hours, minutes] = time.split(':').map(Number);
                                             const timeDate = new Date();
                                             timeDate.setHours(hours, minutes, 0, 0);

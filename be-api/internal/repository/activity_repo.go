@@ -23,6 +23,7 @@ type ActivityRepository interface {
 	ListApplicants(activityID uint) ([]model.ActivityParticipant, error)
 	UpdateParticipantStatus(id uint, status string) error
 	CountAccepted(activityID uint) (int64, error)
+	BatchCountAccepted(activityIDs []uint) (map[uint]int64, error)
 	GetApplicationsByUserID(userID uint) ([]model.ActivityParticipant, error)
 }
 
@@ -103,10 +104,14 @@ func (r *activityRepository) List(filter ActivityFilter) ([]model.Activity, int6
 		return nil, 0, err
 	}
 
-	// efficient enough for now
+	// Batch populate CurrentParticipants in a single query
+	ids := make([]uint, len(activities))
 	for i := range activities {
-		count, _ := r.CountAccepted(activities[i].ID)
-		activities[i].CurrentParticipants = count
+		ids[i] = activities[i].ID
+	}
+	countMap, _ := r.BatchCountAccepted(ids)
+	for i := range activities {
+		activities[i].CurrentParticipants = countMap[activities[i].ID]
 	}
 
 	return activities, total, nil
@@ -126,10 +131,14 @@ func (r *activityRepository) GetByUserID(userID uint) ([]model.Activity, error) 
 		Order("created_at DESC").
 		Find(&activities).Error
 
-	if err == nil {
+	if err == nil && len(activities) > 0 {
+		ids := make([]uint, len(activities))
 		for i := range activities {
-			count, _ := r.CountAccepted(activities[i].ID)
-			activities[i].CurrentParticipants = count
+			ids[i] = activities[i].ID
+		}
+		countMap, _ := r.BatchCountAccepted(ids)
+		for i := range activities {
+			activities[i].CurrentParticipants = countMap[activities[i].ID]
 		}
 	}
 
@@ -160,7 +169,7 @@ func (r *activityRepository) GetParticipant(activityID, userID uint) (*model.Act
 
 func (r *activityRepository) ListParticipants(activityID uint) ([]model.ActivityParticipant, error) {
 	var participants []model.ActivityParticipant
-	err := r.db.Preload("User").
+	err := r.db.Preload("User").Preload("User.Profile").
 		Where("activity_id = ? AND status = ?", activityID, "accepted").
 		Find(&participants).Error
 	return participants, err
@@ -196,4 +205,33 @@ func (r *activityRepository) GetApplicationsByUserID(userID uint) ([]model.Activ
 		Order("applied_at DESC").
 		Find(&applications).Error
 	return applications, err
+}
+
+// BatchCountAccepted returns accepted participant counts for multiple activities
+// in a single query, eliminating the N+1 problem.
+func (r *activityRepository) BatchCountAccepted(activityIDs []uint) (map[uint]int64, error) {
+	result := make(map[uint]int64)
+	if len(activityIDs) == 0 {
+		return result, nil
+	}
+
+	type countRow struct {
+		ActivityID uint
+		Count      int64
+	}
+
+	var rows []countRow
+	err := r.db.Model(&model.ActivityParticipant{}).
+		Select("activity_id, COUNT(*) as count").
+		Where("activity_id IN ? AND status = ?", activityIDs, "accepted").
+		Group("activity_id").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	for _, row := range rows {
+		result[row.ActivityID] = row.Count
+	}
+	return result, nil
 }

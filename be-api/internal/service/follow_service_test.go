@@ -133,6 +133,15 @@ func (r *mockRatingRepo) GetByTargetID(targetID uint) ([]model.Rating, error) {
 	return result, nil
 }
 
+func (r *mockRatingRepo) GetAveragesByUserIDs(userIDs []uint) (map[uint]float64, error) {
+	result := make(map[uint]float64)
+	for _, uid := range userIDs {
+		avg, _ := r.GetAverageByUserID(uid)
+		result[uid] = avg
+	}
+	return result, nil
+}
+
 // mockFollowNotificationService is a minimal mock for NotificationService.
 type mockFollowNotificationService struct {
 	notifications []model.Notification

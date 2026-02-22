@@ -1,7 +1,7 @@
 package database
 
 import (
-	"fmt"
+	"azure-magnetar/pkg/logger"
 	"log"
 	"time"
 
@@ -28,5 +28,5 @@ func InitDB(dsn string) {
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
-	fmt.Println("Database connected successfully")
+	logger.Info("database connected successfully")
 }

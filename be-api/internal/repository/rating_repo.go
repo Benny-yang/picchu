@@ -13,6 +13,7 @@ type RatingRepository interface {
 	GetByActivityID(activityID uint) ([]model.Rating, error)
 	Exists(activityID, raterID, targetID uint) (bool, error)
 	GetAverageByUserID(userID uint) (float64, error)
+	GetAveragesByUserIDs(userIDs []uint) (map[uint]float64, error)
 	GetByTargetID(targetID uint) ([]model.Rating, error)
 }
 
@@ -64,9 +65,38 @@ func (r *ratingRepository) GetAverageByUserID(userID uint) (float64, error) {
 
 func (r *ratingRepository) GetByTargetID(targetID uint) ([]model.Rating, error) {
 	var ratings []model.Rating
-	err := r.db.Preload("Rater").Preload("Activity").
+	err := r.db.Preload("Rater").Preload("Rater.Profile").Preload("Activity").
 		Where("target_id = ?", targetID).
 		Order("created_at desc").
 		Find(&ratings).Error
 	return ratings, err
+}
+
+// GetAveragesByUserIDs batch-fetches average ratings for multiple users in a
+// single query, eliminating N+1 when populating comment author ratings.
+func (r *ratingRepository) GetAveragesByUserIDs(userIDs []uint) (map[uint]float64, error) {
+	result := make(map[uint]float64)
+	if len(userIDs) == 0 {
+		return result, nil
+	}
+
+	type avgRow struct {
+		TargetID uint
+		Average  float64
+	}
+
+	var rows []avgRow
+	err := r.db.Model(&model.Rating{}).
+		Select("target_id, COALESCE(AVG(score), 0) as average").
+		Where("target_id IN ?", userIDs).
+		Group("target_id").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	for _, row := range rows {
+		result[row.TargetID] = row.Average
+	}
+	return result, nil
 }

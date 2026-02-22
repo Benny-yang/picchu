@@ -1,16 +1,5 @@
 import React from 'react';
-
-// Define the interface for the activity object
-export interface Activity {
-    id: number | string;
-    title: string;
-    location: string;
-    date: string;
-    timeLeft?: string;
-    tags: string[];
-    image: string;
-    userAvatar?: string;
-}
+import type { Activity } from '../../types';
 
 interface ActivityCardProps {
     activity: Activity;

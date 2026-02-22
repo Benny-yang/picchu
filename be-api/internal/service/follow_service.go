@@ -1,11 +1,10 @@
 package service
 
 import (
-	"errors"
-	"fmt"
-
 	"azure-magnetar/internal/model"
 	"azure-magnetar/internal/repository"
+	"azure-magnetar/pkg/apperror"
+	"fmt"
 )
 
 // FollowService defines the interface for follow-related business logic.
@@ -38,7 +37,7 @@ func NewFollowService(followRepo repository.FollowRepository, ratingRepo reposit
 
 func (s *followService) FollowUser(followerID, targetID uint) error {
 	if followerID == targetID {
-		return errors.New("cannot follow yourself")
+		return apperror.New(apperror.CodeValidation, "cannot follow yourself")
 	}
 
 	isFollowing, err := s.followRepo.IsFollowing(followerID, targetID)
@@ -46,7 +45,7 @@ func (s *followService) FollowUser(followerID, targetID uint) error {
 		return err
 	}
 	if isFollowing {
-		return errors.New("already following this user")
+		return apperror.New(apperror.CodeConflict, "already following this user")
 	}
 
 	follow := &model.Follow{
@@ -67,7 +66,7 @@ func (s *followService) FollowUser(followerID, targetID uint) error {
 
 func (s *followService) UnfollowUser(followerID, targetID uint) error {
 	if followerID == targetID {
-		return errors.New("cannot unfollow yourself")
+		return apperror.New(apperror.CodeValidation, "cannot unfollow yourself")
 	}
 
 	return s.followRepo.Delete(followerID, targetID)

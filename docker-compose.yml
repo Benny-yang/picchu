@@ -1,0 +1,36 @@
+services:
+  be-api:
+    build:
+      context: ./be-api
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_USER=root
+      - DB_PASSWORD=password
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=vibe_coding
+      - DSN=root:password@tcp(db:3306)/vibe_coding?charset=utf8mb4&parseTime=True&loc=UTC
+      - RESEND_API_KEY=re_KETvX7en_BD7YaQXGFYrRpRL7VmMbZJWQ
+
+    depends_on:
+      - db
+
+  fe-web:
+    build:
+      context: ./fe-web
+      args:
+        - VITE_API_URL=http://localhost:8080
+    ports:
+      - "80:80"
+    depends_on:
+      - be-api
+
+  db:
+    image: mysql:8.0
+    container_name: vibe_coding_db
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: vibe_coding
+    ports:
+      - "3306:3306"

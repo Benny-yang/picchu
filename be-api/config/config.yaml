@@ -1,0 +1,10 @@
+# Azure Magnetar Configuration
+# You can override these settings using environment variables (e.g., export PORT=8081)
+
+port: "8080"
+dsn: "root:aa14725766@tcp(127.0.0.1:3306)/azure_magnetar?charset=utf8mb4&parseTime=True&loc=Local"
+jwt_secret: "azure-magnetar-dev-secret-key"
+frontend_url: "http://localhost:5173"
+
+# Optional: if not set, it defaults to http://localhost:{port}
+api_base_url: ""

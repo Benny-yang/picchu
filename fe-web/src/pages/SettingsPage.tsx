@@ -104,9 +104,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser, setCurrentUser
         });
     };
 
-    const handleGenderSelect = (gender: string) => {
-        setProfileData(prev => ({ ...prev, gender }));
-    };
+
 
     const handleSaveAccount = () => {
         alert('帳號設定已儲存');

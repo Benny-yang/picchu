@@ -5,6 +5,7 @@ import WorkDetailHeader from './WorkDetailHeader';
 import WorkDescriptionSection from './WorkDescriptionSection';
 import WorkCommentsSection from './WorkCommentsSection';
 import { workService } from '../../services/workService';
+import { IMG_BASE_URL } from '../../config';
 
 
 interface WorkDetailModalProps {
@@ -136,10 +137,11 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({
         ? work.images
         : (work?.imageUrl ? [work.imageUrl] : (initialData?.imageUrl ? [initialData.imageUrl] : []));
 
+
     // Handle relative URLs for images
     const processedImages = images.map((img: string) => {
         if (img && !img.startsWith('http') && !img.startsWith('data:')) {
-            return `http://localhost:8080/${img}`;
+            return `${IMG_BASE_URL}/${img}`;
         }
         return img;
     });
@@ -157,7 +159,7 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({
 
     // Process Avatar URL
     const processedAvatar = (authorAvatar && !authorAvatar.startsWith('http') && !authorAvatar.startsWith('data:'))
-        ? `http://localhost:8080/${authorAvatar}`
+        ? `${IMG_BASE_URL}/${authorAvatar}`
         : authorAvatar;
 
     if (!isOpen) return null;
@@ -209,6 +211,7 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({
 
                     <WorkDescriptionSection
                         description={description}
+                        createdAt={work?.createdAt || ''}
                         isEditing={isEditing}
                         onSave={handleSaveDescription}
                         onCancelEdit={() => setIsEditing(false)}

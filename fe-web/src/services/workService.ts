@@ -1,12 +1,6 @@
 import api from './api';
 import { handleApiError } from './serviceUtils';
-
-export interface WallParams {
-    type: 'trending' | 'following';
-    cursor?: string;
-    seed?: number;
-    limit?: number;
-}
+import type { WallParams } from '../types';
 
 export const workService = {
     getWall: async (params: WallParams): Promise<{ data: any[]; nextCursor: string; seed: number }> => {

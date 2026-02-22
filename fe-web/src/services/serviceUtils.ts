@@ -1,4 +1,4 @@
-import { ServiceError } from './authService';
+import { ServiceError } from '../types';
 
 /**
  * Handles API errors by extracting the message and throwing a ServiceError.

@@ -410,17 +410,43 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ currentUser: propUser
                 onClose={() => setIsReviewModalOpen(false)}
                 username={username}
                 totalRating={stats.rating}
-                reviews={reviews.map(r => ({
-                    id: r.id,
-                    reviewerName: r.rater?.username || r.rater?.email || 'Unknown',
-                    reviewerAvatar: r.rater?.profile?.avatarUrl
-                        ? (r.rater.profile.avatarUrl.startsWith('http') ? r.rater.profile.avatarUrl : `http://localhost:8080/${r.rater.profile.avatarUrl}`)
-                        : '',
-                    rating: r.score,
-                    comment: r.comment,
-                    date: new Date(r.createdAt).toLocaleDateString(),
-                    activityTitle: r.activity?.title || 'Unknown Activity'
-                }))}
+                reviews={reviews.map(r => {
+                    // Parse roles logic
+                    const profile = r.rater?.profile;
+                    const rolesData = profile?.roles;
+                    let parsedRoles: string[] = [];
+                    try {
+                        if (Array.isArray(rolesData)) {
+                            parsedRoles = rolesData;
+                        } else if (typeof rolesData === 'string' && rolesData.trim() !== '') {
+                            if (rolesData.startsWith('[')) {
+                                parsedRoles = JSON.parse(rolesData);
+                            } else {
+                                parsedRoles = [rolesData];
+                            }
+                        }
+                        if (parsedRoles.length === 0) {
+                            if (profile?.isPhotographer) parsedRoles.push('攝影師');
+                            if (profile?.isModel) parsedRoles.push('模特兒');
+                        }
+                    } catch {
+                        // ignore
+                    }
+
+                    return {
+                        id: r.id,
+                        reviewerId: r.rater?.id || r.rater?.ID,
+                        reviewerName: r.rater?.username || r.rater?.email || 'Unknown',
+                        reviewerAvatar: r.rater?.profile?.avatarUrl
+                            ? (r.rater.profile.avatarUrl.startsWith('http') ? r.rater.profile.avatarUrl : `http://localhost:8080/${r.rater.profile.avatarUrl}`)
+                            : '',
+                        reviewerRoles: parsedRoles,
+                        rating: r.score,
+                        comment: r.comment,
+                        date: new Date(r.createdAt).toLocaleDateString(),
+                        activityTitle: r.activity?.title || 'Unknown Activity'
+                    };
+                })}
             />
 
             {/* Follow List Modal */}

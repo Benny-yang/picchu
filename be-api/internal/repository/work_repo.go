@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // WorkRepository defines the interface for work/post-related database operations.
@@ -31,8 +32,43 @@ func NewWorkRepository(db *gorm.DB) WorkRepository {
 	return &workRepository{db: db}
 }
 
+// syncTags ensures tags exist and associates them with the post.
+func (r *workRepository) syncTags(tx *gorm.DB, post *model.Post, tags []model.Tag) error {
+	if len(tags) == 0 {
+		return tx.Model(post).Association("Tags").Clear()
+	}
+
+	// 1. Upsert Tags (ignore if name already exists)
+	if err := tx.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "name"}},
+		DoNothing: true,
+	}).Create(&tags).Error; err != nil {
+		return err
+	}
+
+	// 2. Fetch the actual IDs for these tags
+	var names []string
+	for _, t := range tags {
+		names = append(names, t.Name)
+	}
+	var existingTags []model.Tag
+	if err := tx.Where("name IN ?", names).Find(&existingTags).Error; err != nil {
+		return err
+	}
+
+	// 3. Replace associations
+	return tx.Model(post).Association("Tags").Replace(existingTags)
+}
+
 func (r *workRepository) Create(post *model.Post) error {
-	return r.db.Create(post).Error
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// Save the post without tags first to avoid unique constraint issues
+		if err := tx.Omit("Tags").Create(post).Error; err != nil {
+			return err
+		}
+		// Then sync the tags
+		return r.syncTags(tx, post, post.Tags)
+	})
 }
 
 func (r *workRepository) GetByID(id uint, currentUserID uint) (*model.Post, error) {
@@ -51,10 +87,12 @@ func (r *workRepository) GetByID(id uint, currentUserID uint) (*model.Post, erro
 }
 
 func (r *workRepository) Update(post *model.Post) error {
-	if err := r.db.Save(post).Error; err != nil {
-		return err
-	}
-	return r.db.Model(post).Association("Tags").Replace(post.Tags)
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Omit("Tags").Save(post).Error; err != nil {
+			return err
+		}
+		return r.syncTags(tx, post, post.Tags)
+	})
 }
 
 func (r *workRepository) Delete(id uint) error {

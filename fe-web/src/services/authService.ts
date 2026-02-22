@@ -1,27 +1,7 @@
 import api from './api';
 import { tokenManager } from './tokenManager';
-
-export interface ApiResponse<T> {
-    code: number;
-    message: string;
-    data: T;
-}
-
-export class ServiceError extends Error {
-    public context?: any;
-
-    constructor(message: string, context?: any) {
-        super(message);
-        this.context = context;
-        this.name = 'ServiceError';
-    }
-}
-
-const handleApiError = (error: any, contextMsg: string): never => {
-    console.error(`[ServiceError] ${contextMsg}:`, error);
-    const message = error.response?.data?.message || error.message || 'Unknown error occurred';
-    throw new ServiceError(message, { originalError: error, context: contextMsg });
-};
+import { handleApiError } from './serviceUtils';
+import type { ApiResponse } from '../types';
 
 export const authService = {
     register: async (email: string, password: string): Promise<ApiResponse<string>> => {
@@ -33,9 +13,9 @@ export const authService = {
         }
     },
 
-    login: async (email: string, password: string): Promise<ApiResponse<{ token: string; user: any }>> => {
+    login: async (email: string, password: string, rememberMe: boolean = false): Promise<ApiResponse<{ token: string; user: any }>> => {
         try {
-            const response = await api.post('/auth/login', { email, password });
+            const response = await api.post('/auth/login', { email, password, rememberMe });
             const result = response.data;
 
             // Persist token and user on successful login
@@ -111,6 +91,33 @@ export const authService = {
             return response.data.data || [];
         } catch (error) {
             return handleApiError(error, 'Get my applications failed');
+        }
+    },
+
+    forgotPassword: async (email: string): Promise<ApiResponse<string>> => {
+        try {
+            const response = await api.post('/auth/forgot-password', { email });
+            return response.data;
+        } catch (error) {
+            return handleApiError(error, 'Forgot password request failed');
+        }
+    },
+
+    resetPassword: async (token: string, newPassword: string): Promise<ApiResponse<string>> => {
+        try {
+            const response = await api.post('/auth/reset-password', { token, newPassword });
+            return response.data;
+        } catch (error) {
+            return handleApiError(error, 'Reset password failed');
+        }
+    },
+
+    resendVerification: async (email: string): Promise<ApiResponse<string>> => {
+        try {
+            const response = await api.post('/auth/resend-verification', { email });
+            return response.data;
+        } catch (error) {
+            return handleApiError(error, 'Resend verification email failed');
         }
     },
 };
