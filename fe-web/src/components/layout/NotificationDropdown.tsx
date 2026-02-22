@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { IMG_BASE_URL } from '../../config';
 import { notificationService } from '../../services/notificationService';
 import { User } from 'lucide-react'; // Import User icon
 import type { Notification } from '../../types';
@@ -110,7 +111,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
                                         src={
                                             item.actor.profile.avatarUrl.startsWith('http')
                                                 ? item.actor.profile.avatarUrl
-                                                : `http://localhost:8080/${item.actor.profile.avatarUrl}`
+                                                : `${IMG_BASE_URL}/${item.actor.profile.avatarUrl.startsWith('/') ? item.actor.profile.avatarUrl.slice(1) : item.actor.profile.avatarUrl}`
                                         }
                                         alt={item.actor?.username || 'User'}
                                         className="w-10 h-10 rounded-full bg-gray-100 flex-shrink-0 object-cover cursor-pointer hover:opacity-80 transition-opacity"

@@ -10,7 +10,7 @@ PROJECT_ID="project-df010f57-c295-4f3c-ba4"
 REGION="asia-east1"
 REPO_NAME="vibe-coding-repo"
 SQL_INSTANCE_NAME="vibe-coding-db"
-DB_NAME="vibe_coding"
+DB_NAME="vibe_coding_test"
 DB_USER="root"
 
 # Colors for output
@@ -88,11 +88,11 @@ fi
 # 4. Deploy Backend
 echo -e "${YELLOW}Building and Deploying Backend API...${NC}"
 gcloud builds submit ./be-api \
-    --tag $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/be-api:latest
+    --tag $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/be-api-test:latest
 
 echo -e "${YELLOW}Deploying Backend to Cloud Run...${NC}"
-gcloud run deploy be-api \
-    --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/be-api:latest \
+gcloud run deploy be-api-test \
+    --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/be-api-test:latest \
     --platform managed \
     --region $REGION \
     --allow-unauthenticated \
@@ -100,7 +100,7 @@ gcloud run deploy be-api \
     --add-cloudsql-instances $PROJECT_ID:$REGION:$SQL_INSTANCE_NAME
 
 # Get Backend URL
-BACKEND_URL=$(gcloud run services describe be-api --platform managed --region $REGION --format 'value(status.url)')
+BACKEND_URL=$(gcloud run services describe be-api-test --platform managed --region $REGION --format 'value(status.url)')
 echo -e "${GREEN}Backend deployed at: $BACKEND_URL${NC}"
 
 # 5. Deploy Frontend
@@ -109,20 +109,20 @@ echo "VITE_API_URL=$BACKEND_URL/api/v1" > ./fe-web/.env.production
 echo "VITE_IMG_BASE_URL=$BACKEND_URL" >> ./fe-web/.env.production
 
 gcloud builds submit ./fe-web \
-    --tag $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/fe-web:latest
+    --tag $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/fe-web-test:latest
 
 echo -e "${YELLOW}Deploying Frontend to Cloud Run...${NC}"
-gcloud run deploy fe-web \
-    --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/fe-web:latest \
+gcloud run deploy fe-web-test \
+    --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/fe-web-test:latest \
     --platform managed \
     --region $REGION \
     --allow-unauthenticated
 
-FRONTEND_URL=$(gcloud run services describe fe-web --platform managed --region $REGION --format 'value(status.url)')
+FRONTEND_URL=$(gcloud run services describe fe-web-test --platform managed --region $REGION --format 'value(status.url)')
 echo -e "${GREEN}Frontend deployed at: $FRONTEND_URL${NC}"
 
 echo -e "${YELLOW}Updating Backend with Full Environment Variables...${NC}"
-gcloud run services update be-api \
+gcloud run services update be-api-test \
     --region $REGION \
     --update-env-vars="API_BASE_URL=$BACKEND_URL,FRONTEND_URL=$FRONTEND_URL,RESEND_API_KEY=re_KETvX7en_BD7YaQXGFYrRpRL7VmMbZJWQ"
 

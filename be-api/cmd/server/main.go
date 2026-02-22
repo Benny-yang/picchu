@@ -17,6 +17,8 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	_ "azure-magnetar/docs"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // @title           Azure Magnetar API
@@ -59,7 +61,7 @@ func main() {
 
 	// 5. Start Server
 	logger.Info("server starting", "port", cfg.Port)
-	if err := r.Run(":" + cfg.Port); err != nil {
+	if err := r.Run("0.0.0.0:" + cfg.Port); err != nil {
 		logger.Error("failed to start server", "error", err)
 	}
 }

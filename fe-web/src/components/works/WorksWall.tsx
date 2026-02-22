@@ -59,16 +59,18 @@ const WorksWall: React.FC<WorksWallProps> = ({ currentUser }) => {
                     </div>
 
                     {/* Following Tab */}
-                    <div
-                        className={`px-8 py-4 text-sm font-bold cursor-pointer relative ${activeTab === 'following' ? 'text-[#009bcd]' : 'text-gray-500 hover:text-gray-800'
-                            }`}
-                        onClick={() => handleTabChange('following')}
-                    >
-                        追蹤
-                        {activeTab === 'following' && (
-                            <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#009bcd]" />
-                        )}
-                    </div>
+                    {currentUser && (
+                        <div
+                            className={`px-8 py-4 text-sm font-bold cursor-pointer relative ${activeTab === 'following' ? 'text-[#009bcd]' : 'text-gray-500 hover:text-gray-800'
+                                }`}
+                            onClick={() => handleTabChange('following')}
+                        >
+                            追蹤
+                            {activeTab === 'following' && (
+                                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#009bcd]" />
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Content: Grid */}

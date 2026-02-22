@@ -1,6 +1,5 @@
 import React from 'react';
 import { Copy, Heart, MessageCircle } from 'lucide-react';
-import type { Work } from '../../types';
 
 interface WorkCardProps {
     imageUrl: string;

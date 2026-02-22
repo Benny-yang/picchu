@@ -54,8 +54,12 @@ export interface Comment {
     user: {
         username: string;
         avatarUrl?: string;
+        averageRating?: number;
         profile?: {
             avatarUrl?: string;
+            roles?: string; // JSON string, e.g. ["photographer", "model"]
+            isPhotographer?: boolean;
+            isModel?: boolean;
         };
     };
     content: string;

@@ -275,6 +275,7 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
                         onShowApplicationModal={() => setShowApplicationModal(true)}
                         onDeleteActivity={handleDeleteActivity}
                         onCancelApplication={handleCancelApplication}
+                        currentUser={currentUser}
                     />
 
                     {/* Message Board */}

@@ -3,6 +3,7 @@ import MainHeader from '../components/layout/MainHeader';
 import { authService } from '../services/authService';
 import TermsContent from '../components/legal/TermsContent';
 import PrivacyContent from '../components/legal/PrivacyContent';
+import { IMG_BASE_URL } from '../config';
 
 interface SettingsPageProps {
     currentUser?: any;
@@ -63,7 +64,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser, setCurrentUser
                 });
                 const rawAvatar = user.profile?.avatarUrl || user.avatarUrl || null;
                 if (rawAvatar && !rawAvatar.startsWith('http') && !rawAvatar.startsWith('data:')) {
-                    setAvatarPreview(`http://localhost:8080/${rawAvatar}`);
+                    setAvatarPreview(`${IMG_BASE_URL}/${rawAvatar.startsWith('/') ? rawAvatar.slice(1) : rawAvatar}`);
                 } else {
                     setAvatarPreview(rawAvatar);
                 }
@@ -324,7 +325,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser, setCurrentUser
                                             value={profileData.phone}
                                             onChange={handleProfileChange}
                                             className="w-full px-4 py-2 border-b border-[#009bcd] focus:outline-none bg-transparent text-gray-900 placeholder-gray-400"
-                                            placeholder="請輸入手機號碼 (選填)"
+                                            placeholder="請輸入手機號碼（非必填）"
                                         />
                                     </div>
                                 </div>

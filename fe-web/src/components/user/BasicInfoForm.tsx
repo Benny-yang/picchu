@@ -137,7 +137,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ onSubmit, initialData }) 
                             value={formData.phone}
                             onChange={handleChange}
                             className="w-full text-[16px] text-[#191919] focus:outline-none bg-transparent"
-                            placeholder="請輸入手機號碼"
+                            placeholder="請輸入手機號碼（非必填）"
                         />
                     </div>
                 </div>

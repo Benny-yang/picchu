@@ -13,7 +13,7 @@ import { authService } from '../services/authService';
 import { followService } from '../services/followService';
 import { tokenManager } from '../services/tokenManager';
 import { ratingService } from '../services/ratingService';
-
+import { IMG_BASE_URL } from '../config';
 
 interface UserProfilePageProps {
     currentUser?: any;
@@ -151,7 +151,7 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ currentUser: propUser
     const displayName = profile.displayName || user.username || '';
     const rawAvatar = profile.avatarUrl;
     const avatar = (rawAvatar && !rawAvatar.startsWith('http') && !rawAvatar.startsWith('data:'))
-        ? `http://localhost:8080/${rawAvatar}`
+        ? `${IMG_BASE_URL}/${rawAvatar.startsWith('/') ? rawAvatar.slice(1) : rawAvatar}`
         : rawAvatar;
     const isPhotographer = profile.isPhotographer;
     const isModel = profile.isModel;
@@ -349,7 +349,7 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ currentUser: propUser
                             <div className="w-16 h-16 rounded-full border-2 border-[#191919] flex items-center justify-center mb-4">
                                 <Calendar size={32} strokeWidth={1.5} className="text-[#191919]" />
                             </div>
-                            <h3 className="text-xl font-bold text-[#191919] mb-2">目前沒有參加或主辦的活動</h3>
+                            <h3 className="text-xl font-bold text-[#191919] mb-2">目前還沒參加或舉辦任何活動</h3>
                             <p className="text-gray-500 mb-6 max-w-xs">{isOwnProfile ? "尋找感興趣的攝影活動，或自己舉辦一場吧！" : "這位使用者尚未參加任何活動。"}</p>
                             {isOwnProfile && (
                                 <button
@@ -438,7 +438,7 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ currentUser: propUser
                         reviewerId: r.rater?.id || r.rater?.ID,
                         reviewerName: r.rater?.username || r.rater?.email || 'Unknown',
                         reviewerAvatar: r.rater?.profile?.avatarUrl
-                            ? (r.rater.profile.avatarUrl.startsWith('http') ? r.rater.profile.avatarUrl : `http://localhost:8080/${r.rater.profile.avatarUrl}`)
+                            ? (r.rater.profile.avatarUrl.startsWith('http') ? r.rater.profile.avatarUrl : `${IMG_BASE_URL}/${r.rater.profile.avatarUrl.startsWith('/') ? r.rater.profile.avatarUrl.slice(1) : r.rater.profile.avatarUrl}`)
                             : '',
                         reviewerRoles: parsedRoles,
                         rating: r.score,

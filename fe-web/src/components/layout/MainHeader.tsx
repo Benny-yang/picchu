@@ -5,6 +5,7 @@ import NotificationDropdown from './NotificationDropdown';
 import ApplicationManagementModal from '../activities/ApplicationManagementModal';
 import MobileMenu from './MobileMenu';
 import ProfileDropdown from './ProfileDropdown';
+import { IMG_BASE_URL } from '../../config';
 
 
 interface MainHeaderProps {
@@ -59,7 +60,8 @@ const MainHeader: React.FC<MainHeaderProps> = ({ activePage, currentUser }) => {
 
     let avatarSrc = currentUser?.profile?.avatarUrl || currentUser?.avatarUrl;
     if (avatarSrc && !avatarSrc.startsWith('http') && !avatarSrc.startsWith('data:')) {
-        avatarSrc = `http://localhost:8080/${avatarSrc}`;
+        const cleanPath = avatarSrc.startsWith('/') ? avatarSrc.slice(1) : avatarSrc;
+        avatarSrc = `${IMG_BASE_URL}/${cleanPath}`;
     }
 
     useEffect(() => {

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, Star, Calendar, User } from 'lucide-react';
 import { ratingService } from '../../services/ratingService';
 import type { Review } from '../../types';
+import { IMG_BASE_URL } from '../../config';
 
 interface ReviewHistoryModalProps {
     isOpen: boolean;
@@ -66,7 +67,7 @@ const ReviewHistoryModal: React.FC<ReviewHistoryModalProps> = ({
                             id: r.id,
                             reviewerId: r.raterId || r.rater?.id,
                             reviewerName: r.rater?.username || 'Unknown',
-                            reviewerAvatar: r.rater?.profile?.avatarUrl ? (r.rater.profile.avatarUrl.startsWith('http') ? r.rater.profile.avatarUrl : `http://localhost:8080/${r.rater.profile.avatarUrl}`) : '',
+                            reviewerAvatar: r.rater?.profile?.avatarUrl ? (r.rater.profile.avatarUrl.startsWith('http') ? r.rater.profile.avatarUrl : `${IMG_BASE_URL}/${r.rater.profile.avatarUrl.startsWith('/') ? r.rater.profile.avatarUrl.slice(1) : r.rater.profile.avatarUrl}`) : '',
                             reviewerRoles: parsedRoles,
                             rating: r.score,
                             comment: r.comment,

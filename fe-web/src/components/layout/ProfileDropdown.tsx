@@ -25,18 +25,18 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ isOpen, onClose }) =>
                         我的主頁
                     </button>
                     <button
-                        onClick={() => window.location.href = '?view=settings'}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                    >
-                        <Settings size={16} />
-                        設定
-                    </button>
-                    <button
                         onClick={() => window.location.href = '?view=activity-application-history'}
                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                     >
                         <User size={16} />
                         活動申請紀錄
+                    </button>
+                    <button
+                        onClick={() => window.location.href = '?view=settings'}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                    >
+                        <Settings size={16} />
+                        設定
                     </button>
                     <div className="border-t border-gray-100 my-1"></div>
                     <button

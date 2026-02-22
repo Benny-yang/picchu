@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import UserInfo from '../user/UserInfo';
 import { activityService } from '../../services/activityService';
+import { IMG_BASE_URL } from '../../config';
 
 interface CommentsSectionProps {
     activityId: number;
@@ -55,7 +56,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ activityId }) => {
     const getAvatarUrl = (url: string) => {
         if (url) {
             if (url.startsWith('http')) return url;
-            return `http://localhost:8080/${url}`;
+            return `${IMG_BASE_URL}/${url.startsWith('/') ? url.slice(1) : url}`;
         }
         return ''; // Return empty string to trigger UserInfo's default avatar
     };

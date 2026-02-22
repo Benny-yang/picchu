@@ -276,6 +276,13 @@ func (h *WorkHandler) GetWorkComments(c *gin.Context) {
 		return
 	}
 
+	for i := range comments {
+		rating, err := h.ratingService.GetAverageByUserID(comments[i].User.ID)
+		if err == nil {
+			comments[i].User.AverageRating = rating
+		}
+	}
+
 	response.Success(c, comments)
 }
 

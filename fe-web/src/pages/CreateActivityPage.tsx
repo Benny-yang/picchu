@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import MainHeader from '../components/layout/MainHeader';
 import { activityService } from '../services/activityService';
+import { IMG_BASE_URL } from '../config';
 
 interface CreateActivityPageProps {
     currentUser?: any;
@@ -15,7 +16,7 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
         time: '',
         city: '',
         location: '',
-        capacity: '',
+        capacity: '1',
         roles: [] as string[],
         tags: [] as string[],
         images: [] as { file?: File; preview: string; isExisting?: boolean }[],
@@ -58,7 +59,7 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
 
                     // Existing images
                     const existingImages = (data.images || []).map((url: string) => ({
-                        preview: url.startsWith('http') ? url : `http://localhost:8080/${url}`,
+                        preview: url.startsWith('http') ? url : `${IMG_BASE_URL}/${url.startsWith('/') ? url.slice(1) : url}`,
                         isExisting: true,
                         url: url // Keep original (relative or absolute) to send back? 
                         // Actually better to send back the full URL if our backend logic checks for "http" prefix.
@@ -190,6 +191,45 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Custom Validations
+        if (!formData.title.trim()) {
+            alert('請填寫活動名稱！');
+            return;
+        }
+        if (!formData.date) {
+            alert('請選擇日期！');
+            return;
+        }
+        if (!formData.time) {
+            alert('請選擇時間！');
+            return;
+        }
+        if (!formData.city) {
+            alert('請選擇縣市！');
+            return;
+        }
+        if (!formData.location.trim()) {
+            alert('請填寫詳細地點！');
+            return;
+        }
+        if (formData.roles.length === 0) {
+            alert('請至少選擇一種需求角色！');
+            return;
+        }
+        if (formData.tags.length === 0) {
+            alert('請至少輸入一種拍攝風格！');
+            return;
+        }
+        if (!formData.description.trim()) {
+            alert('請填寫活動內容！');
+            return;
+        }
+        if (formData.images.length === 0) {
+            alert('請至少上傳一張活動照片！');
+            return;
+        }
+
         try {
             // Convert new images to base64, keep existing as strings
             const imagePromises = formData.images.map(img => {
@@ -281,7 +321,6 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
                                 onChange={handleChange}
                                 placeholder="請輸入活動名稱"
                                 className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#009bcd] transition-all bg-gray-50 hover:bg-white"
-                                required
                             />
                         </div>
 
@@ -303,7 +342,6 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
                                     value={formData.date}
                                     onChange={handleChange}
                                     className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#009bcd] transition-all bg-gray-50 hover:bg-white placeholder-gray-400"
-                                    required
                                 />
                             </div>
                             <div>
@@ -315,7 +353,6 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
                                     value={formData.time}
                                     onChange={handleChange}
                                     className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#009bcd] transition-all bg-gray-50 hover:bg-white appearance-none"
-                                    required
                                 >
                                     <option value="" disabled>請選擇時間</option>
                                     {Array.from({ length: 24 }).flatMap((_, i) => {
@@ -354,7 +391,6 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
                                     value={formData.city}
                                     onChange={handleChange}
                                     className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#009bcd] transition-all bg-gray-50 hover:bg-white appearance-none"
-                                    required
                                 >
                                     <option value="" disabled>請選擇縣市</option>
                                     {CITIES.map(city => (
@@ -375,7 +411,6 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
                                     onChange={handleChange}
                                     placeholder="請輸入詳細地點"
                                     className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#009bcd] transition-all bg-gray-50 hover:bg-white"
-                                    required
                                 />
                             </div>
                         </div>
@@ -474,7 +509,6 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
                                 onChange={handleChange}
                                 placeholder="請輸入詳細的活動內容..."
                                 className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#009bcd] transition-all bg-gray-50 hover:bg-white h-32 resize-none"
-                                required
                             />
                         </div>
 

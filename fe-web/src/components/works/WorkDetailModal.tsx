@@ -5,6 +5,7 @@ import WorkDetailHeader from './WorkDetailHeader';
 import WorkDescriptionSection from './WorkDescriptionSection';
 import WorkCommentsSection from './WorkCommentsSection';
 import { workService } from '../../services/workService';
+import { tokenManager } from '../../services/tokenManager';
 import { IMG_BASE_URL } from '../../config';
 
 
@@ -223,6 +224,7 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({
                         comments={comments}
                         onLikeToggle={handleLikeToggle}
                         onPostComment={handlePostComment}
+                        currentUserId={tokenManager.getUser()?.id}
                     />
                 </div>
             </div>

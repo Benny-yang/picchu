@@ -11,6 +11,7 @@ interface ActivityActionButtonsProps {
     onShowApplicationModal: () => void;
     onDeleteActivity: () => void;
     onCancelApplication: () => void;
+    currentUser?: any;
 }
 
 const ActivityActionButtons: React.FC<ActivityActionButtonsProps> = ({
@@ -23,6 +24,7 @@ const ActivityActionButtons: React.FC<ActivityActionButtonsProps> = ({
     onShowApplicationModal,
     onDeleteActivity,
     onCancelApplication,
+    currentUser,
 }) => {
     if (status === 'isHost') {
         if (isEnded) {
@@ -86,13 +88,22 @@ const ActivityActionButtons: React.FC<ActivityActionButtonsProps> = ({
                             人數已額滿
                         </button>
                     ) : (
-                        <button
-                            onClick={onShowApplicationModal}
-                            className="px-12 py-2.5 rounded-full text-white font-bold text-base shadow-md hover:shadow-lg hover:opacity-95 transition-all transform active:scale-95"
-                            style={{ background: "linear-gradient(90deg, #FDBB2D 0%, #22C1C3 100%)" }}
-                        >
-                            申請加入
-                        </button>
+                        currentUser ? (
+                            <button
+                                onClick={onShowApplicationModal}
+                                className="px-12 py-2.5 rounded-full text-white font-bold text-base shadow-md hover:shadow-lg hover:opacity-95 transition-all transform active:scale-95"
+                                style={{ background: "linear-gradient(90deg, #FDBB2D 0%, #22C1C3 100%)" }}
+                            >
+                                申請加入
+                            </button>
+                        ) : (
+                            <button
+                                disabled
+                                className="px-12 py-2.5 rounded-full bg-gray-300 text-white font-bold text-base cursor-not-allowed"
+                            >
+                                登入後即可申請
+                            </button>
+                        )
                     )
                 ) : status === 'applied' ? (
                     <>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { formatRelativeTime } from '../../utils/dateUtils';
-import { Heart, User } from 'lucide-react';
-// import { DEFAULT_AVATAR } from '../layout/MainHeader'; // Removed unused import
+import { IMG_BASE_URL } from '../../config';
+import { Heart, User, Star } from 'lucide-react';
 import type { Comment } from '../../types';
 
 interface WorkCommentsSectionProps {
@@ -18,7 +18,8 @@ const WorkCommentsSection: React.FC<WorkCommentsSectionProps> = ({
     likeCount = 0,
     comments = [],
     onLikeToggle,
-    onPostComment
+    onPostComment,
+    currentUserId
 }) => {
     const [newComment, setNewComment] = useState('');
 
@@ -36,7 +37,7 @@ const WorkCommentsSection: React.FC<WorkCommentsSectionProps> = ({
     const getAvatarUrl = (user: Comment['user']) => {
         const url = user.profile?.avatarUrl || user.avatarUrl;
         if (url && !url.startsWith('http') && !url.startsWith('data:')) {
-            return `http://localhost:8080/${url}`;
+            return `${IMG_BASE_URL}/${url.startsWith('/') ? url.slice(1) : url}`;
         }
         if (url) return url;
         return null; // Return null to trigger default avatar
@@ -68,13 +69,44 @@ const WorkCommentsSection: React.FC<WorkCommentsSectionProps> = ({
                                 )}
                             </div>
                             <div className="flex-1 text-left">
-                                <div className="text-sm text-[#191919]">
+                                <div className="flex items-center gap-1 flex-wrap mb-0.5">
                                     <span
-                                        className="font-bold mr-2 cursor-pointer hover:text-[#009bcd] transition-colors"
+                                        className="font-bold text-sm text-[#191919] cursor-pointer hover:text-[#009bcd] transition-colors"
                                         onClick={() => window.location.href = `?view=profile&uid=${comment.userId}`}
                                     >
                                         {comment.user?.username || 'Unknown'}
                                     </span>
+                                    {(() => {
+                                        const profile = comment.user?.profile;
+                                        if (!profile) return null;
+                                        const roles: string[] = [];
+                                        // Prefer boolean flags over JSON string as they are more reliable
+                                        if (profile.isPhotographer) roles.push('攝影師');
+                                        if (profile.isModel) roles.push('模特兒');
+                                        // Fallback to JSON roles string if booleans not set
+                                        if (roles.length === 0 && profile.roles) {
+                                            try {
+                                                const parsed: string[] = JSON.parse(profile.roles);
+                                                const labels: Record<string, string> = { photographer: '攝影師', model: '模特兒' };
+                                                parsed.forEach(r => roles.push(labels[r] || r));
+                                            } catch { /* ignore */ }
+                                        }
+                                        if (roles.length === 0) return null;
+                                        return roles.map((r, i) => (
+                                            <React.Fragment key={r}>
+                                                {i > 0 && <span className="text-xs text-gray-400">/</span>}
+                                                <span className="text-xs text-gray-500">{r}</span>
+                                            </React.Fragment>
+                                        ));
+                                    })()}
+                                    {comment.user?.averageRating != null && comment.user.averageRating > 0 && (
+                                        <span className="flex items-center gap-0.5 text-xs text-[#FFAF3C] ml-1">
+                                            <Star size={10} className="fill-[#FFAF3C]" />
+                                            {comment.user.averageRating.toFixed(1)}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="text-sm text-[#191919]">
                                     <span>{comment.content}</span>
                                 </div>
                                 <div className="text-xs text-[#999999] mt-1">
@@ -91,15 +123,22 @@ const WorkCommentsSection: React.FC<WorkCommentsSectionProps> = ({
                 {/* Action Icons */}
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
-                        <button
-                            onClick={onLikeToggle}
-                            className="focus:outline-none transition-transform active:scale-95"
-                        >
+                        {currentUserId ? (
+                            <button
+                                onClick={onLikeToggle}
+                                className="focus:outline-none transition-transform active:scale-95"
+                            >
+                                <Heart
+                                    size={24}
+                                    className={`transition-colors ${isLiked ? 'text-red-500 fill-red-500' : 'text-[#191919] hover:text-red-500'}`}
+                                />
+                            </button>
+                        ) : (
                             <Heart
                                 size={24}
-                                className={`transition-colors ${isLiked ? 'text-red-500 fill-red-500' : 'text-[#191919] hover:text-red-500'}`}
+                                className="text-gray-300 cursor-not-allowed"
                             />
-                        </button>
+                        )}
                     </div>
                     <div className="font-bold text-sm text-[#191919]">
                         {likeCount} likes
@@ -107,22 +146,28 @@ const WorkCommentsSection: React.FC<WorkCommentsSectionProps> = ({
                 </div>
 
                 {/* Comment Input */}
-                <form onSubmit={handleSubmit} className="flex items-center gap-3 border-t border-gray-100 pt-4">
-                    <input
-                        type="text"
-                        placeholder="Add a comment..."
-                        className="flex-1 text-sm outline-none placeholder-gray-400"
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                    />
-                    <button
-                        type="submit"
-                        className={`text-[#009bcd] font-bold text-sm ${!newComment.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:text-[#0089b5]'}`}
-                        disabled={!newComment.trim()}
-                    >
-                        Post
-                    </button>
-                </form>
+                {currentUserId ? (
+                    <form onSubmit={handleSubmit} className="flex items-center gap-3 border-t border-gray-100 pt-4">
+                        <input
+                            type="text"
+                            placeholder="Add a comment..."
+                            className="flex-1 text-sm outline-none placeholder-gray-400"
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                        />
+                        <button
+                            type="submit"
+                            className={`text-[#009bcd] font-bold text-sm ${!newComment.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:text-[#0089b5]'}`}
+                            disabled={!newComment.trim()}
+                        >
+                            Post
+                        </button>
+                    </form>
+                ) : (
+                    <div className="flex items-center justify-center gap-3 border-t border-gray-100 pt-4">
+                        <span className="text-sm text-gray-500">登入後即可留言與按讚</span>
+                    </div>
+                )}
             </div>
         </div>
     );

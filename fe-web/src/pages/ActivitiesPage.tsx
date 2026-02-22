@@ -15,7 +15,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ currentUser }) => {
     const [selectedActivity, setSelectedActivity] = useState<any>(null);
     const [activities, setActivities] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const categories = ["熱門", "我的"];
+    const categories = currentUser ? ["熱門", "我的"] : ["熱門"];
 
     const fetchActivities = async () => {
         setIsLoading(true);
@@ -118,9 +118,9 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ currentUser }) => {
                 ) : (
                     <EmptyState
                         message="目前沒有活動"
-                        description="目前還沒有任何活動，您可以成為第一個舉辦活動的人！"
-                        actionLabel="舉辦活動"
-                        onAction={() => window.location.href = '?view=create-activity'}
+                        description={currentUser ? "目前還沒有任何活動，您可以成為第一個舉辦活動的人！" : "目前還沒有任何活動"}
+                        actionLabel={currentUser ? "舉辦活動" : undefined}
+                        onAction={currentUser ? () => window.location.href = '?view=create-activity' : undefined}
                     />
                 )}
             </div>
