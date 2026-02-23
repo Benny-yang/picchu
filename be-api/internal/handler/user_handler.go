@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"azure-magnetar/config"
@@ -409,7 +410,10 @@ func (h *UserHandler) VerifyEmail(c *gin.Context) {
 	}
 
 	frontendURL := config.LoadConfig().FrontendURL
-	c.Redirect(http.StatusFound, fmt.Sprintf("%s?view=login&verified=true&first_login=true", frontendURL))
+	if strings.HasSuffix(frontendURL, "/") {
+		frontendURL = strings.TrimSuffix(frontendURL, "/")
+	}
+	c.Redirect(http.StatusFound, fmt.Sprintf("%s/login?verified=true&first_login=true", frontendURL))
 }
 
 // ResendVerification godoc
