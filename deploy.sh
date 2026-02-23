@@ -10,7 +10,7 @@ PROJECT_ID="project-df010f57-c295-4f3c-ba4"
 REGION="asia-east1"
 REPO_NAME="vibe-coding-repo"
 SQL_INSTANCE_NAME="vibe-coding-db"
-DB_NAME="vibe_coding"
+DB_NAME="vibe_coding_test"
 DB_USER="root"
 GCS_BUCKET_NAME="${PROJECT_ID}-uploads"
 
