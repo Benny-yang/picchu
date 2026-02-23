@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Star } from 'lucide-react';
 import { activityService } from '../../services/activityService';
 import { IMG_BASE_URL } from '../../config';
@@ -11,6 +12,7 @@ interface ApplicationManagementModalProps {
 }
 
 const ApplicationManagementModal: React.FC<ApplicationManagementModalProps> = ({ isOpen, onClose, activityId }) => {
+    const navigate = useNavigate();
     const [applicants, setApplicants] = useState<Applicant[]>([]);
     const [selectedApplicantId, setSelectedApplicantId] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
@@ -173,7 +175,7 @@ const ApplicationManagementModal: React.FC<ApplicationManagementModalProps> = ({
                                 className="flex flex-col items-center mb-8 cursor-pointer hover:opacity-80 transition-opacity"
                                 onClick={() => {
                                     if (selectedApplicant.userId) {
-                                        window.location.href = `?view=profile&uid=${selectedApplicant.userId}`;
+                                        navigate(`/profile/${selectedApplicant.userId}`);
                                     }
                                 }}
                                 title="前往使用者主頁"

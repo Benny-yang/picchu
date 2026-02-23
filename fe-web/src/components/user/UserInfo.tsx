@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Star, User } from 'lucide-react';
 import ReviewHistoryModal from './ReviewHistoryModal';
 
@@ -52,6 +53,8 @@ const UserInfo: React.FC<UserInfoProps> = ({
         }
     };
 
+    const navigate = useNavigate();
+
     const currentSize = sizeClasses[size];
 
     // Helper to format role
@@ -61,7 +64,7 @@ const UserInfo: React.FC<UserInfoProps> = ({
         if (onClick) {
             onClick();
         } else if (userId) {
-            window.location.href = `?view=profile&uid=${userId}`;
+            navigate(`/profile/${userId}`);
         } else {
             console.warn("UserInfo: userId missing, cannot navigate to profile");
         }

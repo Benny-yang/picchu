@@ -132,6 +132,10 @@ func (s *userService) GetUser(id uint) (*model.User, error) {
 	if avg, err := s.ratingRepo.GetAverageByUserID(id); err == nil {
 		user.AverageRating = avg
 	}
+	// BE-M4 fix: populate derived fields from profile
+	if profile, err := s.repo.GetProfileByUserID(id); err == nil {
+		user.IsPhotographer = profile.IsPhotographer
+	}
 	return user, nil
 }
 
@@ -141,10 +145,19 @@ func (s *userService) GetUserWithProfile(id uint) (*UserProfileResponse, error) 
 		return nil, err
 	}
 
-	profile, _ := s.repo.GetProfileByUserID(id)
+	profile, err := s.repo.GetProfileByUserID(id)
+	if err != nil {
+		logger.Error("failed to get user profile", "userID", id, "error", err)
+	}
 
-	followerCount, _ := s.followRepo.CountFollowers(id)
-	followingCount, _ := s.followRepo.CountFollowing(id)
+	followerCount, err := s.followRepo.CountFollowers(id)
+	if err != nil {
+		logger.Error("failed to count followers", "userID", id, "error", err)
+	}
+	followingCount, err := s.followRepo.CountFollowing(id)
+	if err != nil {
+		logger.Error("failed to count following", "userID", id, "error", err)
+	}
 	var averageRating float64
 	if avg, err := s.ratingRepo.GetAverageByUserID(id); err == nil {
 		averageRating = avg
@@ -197,17 +210,44 @@ func (s *userService) UpdateProfile(userID uint, input UpdateProfileInput) (*mod
 	}
 
 	profile.City = input.City
-
 	profile.Phone = input.Phone
 	profile.IsPhotographer = input.IsPhotographer
 	profile.IsModel = input.IsModel
 	profile.Bio = input.Bio
+
+	// BE-H1 fix: keep Roles string in sync with boolean flags
+	profile.Roles = buildRolesJSON(input.IsPhotographer, input.IsModel)
 
 	if err := s.repo.UpdateProfile(profile); err != nil {
 		return nil, fmt.Errorf("failed to update profile: %w", err)
 	}
 
 	return profile, nil
+}
+
+// buildRolesJSON constructs the roles JSON array string from boolean identity flags.
+// This is the single source of truth for role data on writes.
+func buildRolesJSON(isPhotographer, isModel bool) string {
+	roles := []string{}
+	if isPhotographer {
+		roles = append(roles, "photographer")
+	}
+	if isModel {
+		roles = append(roles, "model")
+	}
+	if len(roles) == 0 {
+		return "[]"
+	}
+	// Build simple JSON array without external dependency
+	result := "["
+	for i, r := range roles {
+		if i > 0 {
+			result += ","
+		}
+		result += fmt.Sprintf("%q", r)
+	}
+	result += "]"
+	return result
 }
 
 func (s *userService) ForgotPassword(emailStr string) error {

@@ -182,7 +182,7 @@ func (h *UserHandler) UpdateMe(c *gin.Context) {
 
 	profile, err := h.userService.UpdateProfile(userID, input)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, err.Error())
+		HandleServiceError(c, err)
 		return
 	}
 

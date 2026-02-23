@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"azure-magnetar/internal/model"
 	"azure-magnetar/internal/repository"
@@ -27,15 +28,23 @@ type CreateCommentInput struct {
 type commentService struct {
 	commentRepo  repository.CommentRepository
 	workRepo     repository.WorkRepository
+	activityRepo repository.ActivityRepository
 	ratingRepo   repository.RatingRepository
 	notifService NotificationService
 }
 
 // NewCommentService creates a new CommentService.
-func NewCommentService(commentRepo repository.CommentRepository, workRepo repository.WorkRepository, ratingRepo repository.RatingRepository, notifService NotificationService) CommentService {
+func NewCommentService(
+	commentRepo repository.CommentRepository,
+	workRepo repository.WorkRepository,
+	activityRepo repository.ActivityRepository,
+	ratingRepo repository.RatingRepository,
+	notifService NotificationService,
+) CommentService {
 	return &commentService{
 		commentRepo:  commentRepo,
 		workRepo:     workRepo,
+		activityRepo: activityRepo,
 		ratingRepo:   ratingRepo,
 		notifService: notifService,
 	}
@@ -54,6 +63,40 @@ func (s *commentService) CreateForActivity(activityID, userID uint, content stri
 
 	if err := s.commentRepo.Create(comment); err != nil {
 		return nil, fmt.Errorf("failed to create comment: %w", err)
+	}
+
+	// Fetch activity to notify the host
+	activity, err := s.activityRepo.GetByID(activityID)
+	if err == nil {
+		notifyUserIDs := make(map[uint]bool)
+
+		// 1. Notify the host (if not the commenter)
+		if activity.HostID != userID {
+			notifyUserIDs[activity.HostID] = true
+		}
+
+		// 2. Notify all accepted participants.
+		// ListParticipants already filters by status='accepted'; no need to re-check here.
+		participants, err := s.activityRepo.ListParticipants(activityID)
+		if err == nil {
+			for _, p := range participants {
+				if p.UserID != userID {
+					notifyUserIDs[p.UserID] = true
+				}
+			}
+		} else {
+			logger.Warn("failed to fetch participants for notification", "activityID", activityID, "error", err)
+		}
+
+		// Send notifications
+		activityIDStr := strconv.FormatUint(uint64(activityID), 10)
+		for toUserID := range notifyUserIDs {
+			if notifErr := s.notifService.SendNotification(toUserID, userID, "activity_comment", activityIDStr, "有人在您參與的活動中留言了！"); notifErr != nil {
+				logger.Warn("failed to send activity comment notification", "toUserID", toUserID, "error", notifErr)
+			}
+		}
+	} else {
+		logger.Warn("failed to fetch activity to send comment notification", "activityID", activityID, "error", err)
 	}
 
 	return s.commentRepo.GetByID(comment.ID)

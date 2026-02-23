@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Star, Calendar, User } from 'lucide-react';
 import { ratingService } from '../../services/ratingService';
 import type { Review } from '../../types';
 import { IMG_BASE_URL } from '../../config';
+import { parseRoles } from '../../utils/roleUtils';
 
 interface ReviewHistoryModalProps {
     isOpen: boolean;
@@ -21,6 +23,7 @@ const ReviewHistoryModal: React.FC<ReviewHistoryModalProps> = ({
     totalRating,
     reviews: propReviews, // Rename to avoid conflict
 }) => {
+    const navigate = useNavigate();
     const [reviews, setReviews] = useState<Review[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -41,27 +44,8 @@ const ReviewHistoryModal: React.FC<ReviewHistoryModalProps> = ({
                     // Preloaded: Activity, Rater, Target
                     // We need to map it to Review interface
                     const mapped: Review[] = data.map((r: any) => {
-                        // Parse roles logic similar to ActivityDetailModal
-                        const profile = r.rater?.profile;
-                        const rolesData = profile?.roles;
-                        let parsedRoles: string[] = [];
-                        try {
-                            if (Array.isArray(rolesData)) {
-                                parsedRoles = rolesData;
-                            } else if (typeof rolesData === 'string' && rolesData.trim() !== '') {
-                                if (rolesData.startsWith('[')) {
-                                    parsedRoles = JSON.parse(rolesData);
-                                } else {
-                                    parsedRoles = [rolesData];
-                                }
-                            }
-                            if (parsedRoles.length === 0) {
-                                if (profile?.isPhotographer) parsedRoles.push('攝影師');
-                                if (profile?.isModel) parsedRoles.push('模特兒');
-                            }
-                        } catch {
-                            // ignore
-                        }
+                        // FE-M2 fix: use shared role parsing util
+                        const parsedRoles = parseRoles(r.rater?.profile);
 
                         return {
                             id: r.id,
@@ -130,7 +114,7 @@ const ReviewHistoryModal: React.FC<ReviewHistoryModalProps> = ({
                                         className="flex items-center gap-3 cursor-pointer group"
                                         onClick={() => {
                                             if (review.reviewerId) {
-                                                window.location.href = `?view=profile&uid=${review.reviewerId}`;
+                                                navigate(`/profile/${review.reviewerId}`);
                                             }
                                         }}
                                     >

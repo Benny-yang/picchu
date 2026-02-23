@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, Star } from 'lucide-react';
 
 interface ActivityActionButtonsProps {
@@ -26,6 +27,7 @@ const ActivityActionButtons: React.FC<ActivityActionButtonsProps> = ({
     onCancelApplication,
     currentUser,
 }) => {
+    const navigate = useNavigate();
     if (status === 'isHost') {
         if (isEnded) {
             return (
@@ -60,7 +62,7 @@ const ActivityActionButtons: React.FC<ActivityActionButtonsProps> = ({
                 </button>
                 <button
                     onClick={() => {
-                        window.location.href = `?view=create-activity&mode=edit&id=${activityId}`;
+                        navigate(`/activities/create?mode=edit&id=${activityId}`);
                     }}
                     className="px-5 py-2 rounded-full text-[#191919] font-medium text-sm shadow-sm border border-gray-200 hover:bg-gray-50 transition-all transform active:scale-95 flex items-center gap-2"
                 >

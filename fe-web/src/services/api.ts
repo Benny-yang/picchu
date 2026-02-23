@@ -26,8 +26,8 @@ api.interceptors.response.use(
         const isAuthRequest = error.config?.url?.includes('/auth/');
         if (error.response?.status === 401 && !isAuthRequest) {
             tokenManager.clearAll();
-            // Navigate to login via URL param (matches app routing)
-            window.location.href = '?view=selection';
+            // Force redirect to login — interceptor is outside React so we use location.replace
+            window.location.replace('/login');
         }
         return Promise.reject(error);
     }

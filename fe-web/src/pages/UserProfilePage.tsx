@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import MainHeader from '../components/layout/MainHeader';
 import WorkDetailModal from '../components/works/WorkDetailModal';
 import ActivityDetailModal from '../components/activities/ActivityDetailModal';
@@ -20,6 +21,8 @@ interface UserProfilePageProps {
 }
 
 const UserProfilePage: React.FC<UserProfilePageProps> = ({ currentUser: propUser }) => {
+    const { uid } = useParams<{ uid?: string }>();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'works' | 'records'>('works');
     const [selectedWork, setSelectedWork] = useState<any>(null);
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -27,12 +30,9 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ currentUser: propUser
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [followListType, setFollowListType] = useState<'followers' | 'following' | null>(null);
 
-    const params = new URLSearchParams(window.location.search);
-    const uid = params.get('uid');
-    // Use prop if available, otherwise fallback to tokenManager (e.g. on direct load if not passed yet?)
-    // But ViewManager should pass it.
     const currentUser = propUser || tokenManager.getUser();
     const isOwnProfile = !uid || uid === 'me' || uid === String(currentUser?.id);
+
 
     const [isFollowing, setIsFollowing] = useState(false);
     const [user, setUser] = useState<any>(null);
@@ -197,7 +197,7 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ currentUser: propUser
                                             新增
                                         </button>
                                         <button
-                                            onClick={() => window.location.href = '?view=settings&tab=profile'}
+                                            onClick={() => navigate('/settings?tab=profile')}
                                             className="px-5 py-2 border border-[#dbdbdb] rounded-full text-sm font-bold text-[#262626] hover:bg-gray-50 transition-colors flex items-center gap-2"
                                         >
                                             編輯個人檔案
@@ -353,7 +353,7 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ currentUser: propUser
                             <p className="text-gray-500 mb-6 max-w-xs">{isOwnProfile ? "尋找感興趣的攝影活動，或自己舉辦一場吧！" : "這位使用者尚未參加任何活動。"}</p>
                             {isOwnProfile && (
                                 <button
-                                    onClick={() => window.location.href = '?view=activities'}
+                                    onClick={() => navigate('/activities')}
                                     className="text-[#009bcd] font-bold text-sm hover:underline"
                                 >
                                     去尋找活動

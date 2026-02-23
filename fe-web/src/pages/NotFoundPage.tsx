@@ -1,6 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const NotFoundPage: React.FC = () => {
+    const navigate = useNavigate();
+
     return (
         <div className="min-h-screen bg-[#f8f9fa] flex flex-col items-center justify-center p-4">
             <div className="text-center max-w-md mx-auto">
@@ -17,7 +20,7 @@ const NotFoundPage: React.FC = () => {
                 </p>
 
                 <button
-                    onClick={() => window.location.href = '?view=works-wall'}
+                    onClick={() => navigate('/')}
                     className="px-8 py-3 bg-[#191919] text-white rounded-full font-bold hover:bg-[#333] transition-transform transform hover:scale-105 active:scale-95 shadow-lg"
                 >
                     返回首頁

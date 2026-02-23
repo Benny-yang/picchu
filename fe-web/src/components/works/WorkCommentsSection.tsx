@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { formatRelativeTime } from '../../utils/dateUtils';
 import { IMG_BASE_URL } from '../../config';
 import { Heart, User, Star } from 'lucide-react';
@@ -21,6 +22,7 @@ const WorkCommentsSection: React.FC<WorkCommentsSectionProps> = ({
     onPostComment,
     currentUserId
 }) => {
+    const navigate = useNavigate();
     const [newComment, setNewComment] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -56,7 +58,7 @@ const WorkCommentsSection: React.FC<WorkCommentsSectionProps> = ({
                         <div key={comment.id} className="flex gap-3 items-start">
                             <div
                                 className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
-                                onClick={() => window.location.href = `?view=profile&uid=${comment.userId}`}
+                                onClick={() => navigate(`/profile/${comment.userId}`)}
                             >
                                 {getAvatarUrl(comment.user) ? (
                                     <img
@@ -72,7 +74,7 @@ const WorkCommentsSection: React.FC<WorkCommentsSectionProps> = ({
                                 <div className="flex items-center gap-1 flex-wrap mb-0.5">
                                     <span
                                         className="font-bold text-sm text-[#191919] cursor-pointer hover:text-[#009bcd] transition-colors"
-                                        onClick={() => window.location.href = `?view=profile&uid=${comment.userId}`}
+                                        onClick={() => navigate(`/profile/${comment.userId}`)}
                                     >
                                         {comment.user?.username || 'Unknown'}
                                     </span>

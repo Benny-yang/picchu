@@ -1,5 +1,7 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, User, Settings, LogOut, Grid, Activity, PlusCircle } from 'lucide-react';
+import { authService } from '../../services/authService';
 
 interface MobileMenuProps {
     isOpen: boolean;
@@ -8,18 +10,24 @@ interface MobileMenuProps {
 }
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, activePage }) => {
-    // Prevent scrolling when menu is open is handled by this effect or parent, 
-    // but for simplicity we'll just handle the overlay click.
+    const navigate = useNavigate();
 
     if (!isOpen) return null;
 
     const navItems = [
-        { id: 'works-wall', label: '作品牆', icon: Grid, path: '?view=works-wall' },
-        { id: 'activities', label: '揪團活動', icon: Activity, path: '?view=activities' },
-        { id: 'create-activity', label: '我要開團', icon: PlusCircle, path: '?view=create-activity' },
-        { id: 'profile', label: '我的主頁', icon: User, path: '?view=profile' },
-        { id: 'settings', label: '設定', icon: Settings, path: '?view=settings' },
+        { id: 'works-wall', label: '作品牆', icon: Grid, path: '/' },
+        { id: 'activities', label: '揪團活動', icon: Activity, path: '/activities' },
+        { id: 'create-activity', label: '我要開團', icon: PlusCircle, path: '/activities/create' },
+        { id: 'profile', label: '我的主頁', icon: User, path: '/profile' },
+        { id: 'settings', label: '設定', icon: Settings, path: '/settings' },
     ];
+
+    const handleLogout = () => {
+        authService.logout();
+        alert('登出成功');
+        navigate('/login');
+        onClose();
+    };
 
     return (
         <div className="fixed inset-0 z-[60] md:hidden">
@@ -48,10 +56,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, activePage }) 
                         {navItems.map((item) => (
                             <button
                                 key={item.id}
-                                onClick={() => window.location.href = item.path}
+                                onClick={() => { navigate(item.path); onClose(); }}
                                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${activePage === item.id
-                                        ? 'bg-blue-50 text-[#009bcd]'
-                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                    ? 'bg-blue-50 text-[#009bcd]'
+                                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                     }`}
                             >
                                 <item.icon size={20} className={activePage === item.id ? 'stroke-[2.5px]' : ''} />
@@ -65,10 +73,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, activePage }) 
                 <div className="p-4 border-t border-gray-100">
                     <button
                         className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                        onClick={() => {
-                            alert('登出成功');
-                            window.location.href = '?view=login';
-                        }}
+                        onClick={handleLogout}
                     >
                         <LogOut size={20} />
                         <span className="font-medium">登出</span>

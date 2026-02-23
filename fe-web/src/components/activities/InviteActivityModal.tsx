@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { X, Check } from 'lucide-react';
 import { activityService } from '../../services/activityService';
 import { authService } from '../../services/authService';
@@ -87,9 +88,9 @@ const InviteActivityModal: React.FC<InviteActivityModalProps> = ({ isOpen, onClo
                         <div className="text-center py-8 text-gray-500">
                             您目前沒有正在舉辦的活動。
                             <br />
-                            <a href="?view=create-activity" className="text-[#009bcd] font-bold mt-2 inline-block">
+                            <Link to="/activities/create" className="text-[#009bcd] font-bold mt-2 inline-block">
                                 立即舉辦活動
-                            </a>
+                            </Link>
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -100,8 +101,8 @@ const InviteActivityModal: React.FC<InviteActivityModalProps> = ({ isOpen, onClo
                                         key={activity.id}
                                         onClick={() => setSelectedActivityId(activity.id)}
                                         className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center justify-between ${selectedActivityId === activity.id
-                                                ? 'border-[#009bcd] bg-blue-50'
-                                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                            ? 'border-[#009bcd] bg-blue-50'
+                                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                             }`}
                                     >
                                         <div className="flex items-center gap-3 overflow-hidden">
@@ -160,8 +161,8 @@ const InviteActivityModal: React.FC<InviteActivityModalProps> = ({ isOpen, onClo
                         onClick={handleInvite}
                         disabled={!selectedActivityId || isSending}
                         className={`px-5 py-2 rounded-full text-white font-bold text-sm transition-all ${!selectedActivityId || isSending
-                                ? 'bg-gray-300 cursor-not-allowed'
-                                : 'bg-[#009bcd] hover:bg-[#0089b5] shadow-md'
+                            ? 'bg-gray-300 cursor-not-allowed'
+                            : 'bg-[#009bcd] hover:bg-[#0089b5] shadow-md'
                             }`}
                     >
                         {isSending ? '發送中...' : '發送邀請'}

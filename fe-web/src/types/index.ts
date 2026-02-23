@@ -66,6 +66,37 @@ export interface Comment {
     createdAt: string;
 }
 
+/** User profile information. */
+export interface UserProfile {
+    id: number;
+    userId: number;
+    displayName: string;
+    username: string;
+    avatarUrl: string;
+    bio: string;
+    roles: string | string[] | null; // JSON string or array; use parseRoles() from roleUtils.ts
+    gender: string;
+    city: string;
+    phone: string;
+    isPhotographer: boolean;
+    isModel: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+/** Authenticated or public user. */
+export interface User {
+    id: number;
+    email: string;
+    username: string;
+    isPhotographer: boolean;
+    isVerified: boolean;
+    averageRating: number;
+    createdAt: string;
+    updatedAt: string;
+    profile?: UserProfile;
+}
+
 /** Rating record from the API. */
 export interface Rating {
     id: number;
@@ -75,9 +106,9 @@ export interface Rating {
     score: number;
     comment: string;
     createdAt: string;
-    activity?: any;
-    rater?: any;
-    target?: any;
+    activity?: { id: number; title: string };
+    rater?: { id: number; username: string; profile?: UserProfile };
+    target?: { id: number; username: string; profile?: UserProfile };
 }
 
 /** Rating input for the ActivityRatingModal form. */

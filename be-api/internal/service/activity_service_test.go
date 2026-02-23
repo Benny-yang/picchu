@@ -444,12 +444,25 @@ func TestGetByID_AutoEndExpiredActivity(t *testing.T) {
 		t.Fatalf("initial status = %q, want 'open'", created.Status)
 	}
 
-	// GetByID should auto-transition to ended
+	// BE-H2 CQS fix: GetByID is a pure read — it no longer triggers auto-end.
+	// The status remains 'open' as persisted in the DB until List runs.
 	fetched, err := svc.GetByID(created.ID)
 	if err != nil {
 		t.Fatalf("GetByID failed: %v", err)
 	}
-	if fetched.Status != "ended" {
-		t.Errorf("status after GetByID = %q, want 'ended'", fetched.Status)
+	if fetched.Status != "open" {
+		t.Errorf("GetByID should not auto-end; status = %q, want 'open'", fetched.Status)
+	}
+
+	// List triggers lazy auto-end (CQS-compliant write path)
+	activities, _, err := svc.List(repository.ActivityFilter{})
+	if err != nil {
+		t.Fatalf("List failed: %v", err)
+	}
+	if len(activities) == 0 {
+		t.Fatal("expected at least one activity from List")
+	}
+	if activities[0].Status != "ended" {
+		t.Errorf("status after List = %q, want 'ended'", activities[0].Status)
 	}
 }

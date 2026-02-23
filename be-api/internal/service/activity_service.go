@@ -142,7 +142,8 @@ func (s *activityService) GetByID(id uint) (*model.Activity, error) {
 		return nil, err
 	}
 
-	s.autoEndIfExpired(activity)
+	// BE-H2 CQS fix: status auto-transition is applied lazily in List/GetByUserID.
+	// GetByID is a pure read; callers should rely on the status field as persisted.
 
 	// Populate host's average rating (gorm:"-" field, not loaded by preload)
 	if avg, err := s.ratingRepo.GetAverageByUserID(activity.HostID); err == nil {
@@ -494,7 +495,7 @@ func (s *activityService) GetMyApplications(userID uint) ([]model.ActivityPartic
 	return s.repo.GetApplicationsByUserID(userID)
 }
 
-// parseEventTime parses common time formats from the frontend.
+// parseEventTime parses common time formats from the frontend and normalizes to UTC.
 func parseEventTime(timeStr string) (time.Time, error) {
 	formats := []string{
 		time.RFC3339,
@@ -507,8 +508,8 @@ func parseEventTime(timeStr string) (time.Time, error) {
 
 	for _, format := range formats {
 		if t, err := time.Parse(format, timeStr); err == nil {
-			// Return original time with its location (don't force UTC)
-			return t, nil
+			// Normalize to UTC for consistent DB storage regardless of client timezone
+			return t.UTC(), nil
 		}
 	}
 

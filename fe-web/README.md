@@ -1,73 +1,93 @@
-# React + TypeScript + Vite
+# fe-web — Picchu 前端
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+以 React + TypeScript + Vite 建構的攝影社群平台前端。
 
-Currently, two official plugins are available:
+## 技術棧
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **框架**：React 18 + TypeScript
+- **路由**：`react-router-dom` v7（BrowserRouter）
+- **建構**：Vite
+- **CSS**：Tailwind CSS
+- **HTTP**：Axios（含 JWT token 自動攜帶及 401 重定向）
 
-## React Compiler
+## 啟動方式
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+# 安裝依賴
+npm install
 
-## Expanding the ESLint configuration
+# 本地開發（需搭配 be-api）
+npm run dev
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+# 型別檢查
+npx tsc --noEmit
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# 建構 production
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 環境變數
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+在 `.env.local` 設定以下變數：
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_API_URL=http://localhost:8080
+VITE_IMG_BASE_URL=http://localhost:8080
+```
+
+## 路由結構
+
+| 路徑 | 頁面 | 需要登入 |
+|---|---|---|
+| `/` | 作品牆 | ❌ |
+| `/activities` | 揪團活動 | ❌ |
+| `/activities/create` | 建立/編輯活動 | ✅ |
+| `/profile` | 我的主頁 | ❌ |
+| `/profile/:uid` | 指定用戶主頁 | ❌ |
+| `/settings` | 設定 | ✅ |
+| `/applications` | 活動申請紀錄 | ✅ |
+| `/login` | 登入/註冊 | ❌ |
+| `/edit-profile` | 編輯個人資料 | ✅ |
+| `/reset-password` | 密碼重設 | ❌ |
+
+## 目錄結構
+
+```
+src/
+├── App.tsx            # BrowserRouter + Routes 定義、RequireAuth 守衛
+├── config.ts          # API URL 環境變數讀取
+├── context/
+│   └── UserContext.ts # 全域 currentUser 狀態共享
+├── types/
+│   └── index.ts       # TypeScript 介面（User、Activity、Work…）
+├── services/          # Axios API 呼叫封裝
+├── utils/
+│   ├── dateUtils.ts   # 相對時間格式化
+│   └── roleUtils.ts   # parseRoles 角色解析（集中管理）
+├── pages/             # 路由對應的頁面元件
+│   ├── UserProfilePage.tsx    # useParams(:uid) 取用 UID
+│   ├── CreateActivityPage.tsx # useSearchParams 讀取 edit mode
+│   ├── ResetPasswordPage.tsx  # useSearchParams 讀取 token
+│   └── ...
+└── components/        # 可重用元件
+    ├── layout/        # MainHeader、MobileMenu、ProfileDropdown…
+    ├── works/         # WorkCard、WorkDetailModal…
+    ├── activities/    # ActivityCard、ActivityDetailModal…
+    └── user/          # UserInfo、ReviewHistoryModal…
+```
+
+## 導航模式
+
+所有導航使用 `react-router-dom` 標準做法：
+
+```tsx
+// 元件內部導航
+const navigate = useNavigate();
+navigate('/profile/123');
+
+// 標籤式導航
+<Link to="/activities">活動</Link>
+
+// Axios interceptor（React context 外部）
+window.location.replace('/login'); // 401 強制登出
 ```

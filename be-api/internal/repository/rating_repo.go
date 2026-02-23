@@ -11,6 +11,8 @@ type RatingRepository interface {
 	Create(rating *model.Rating) error
 	GetByActivityAndRater(activityID, raterID uint) ([]model.Rating, error)
 	GetByActivityID(activityID uint) ([]model.Rating, error)
+	// GetByActivityAndTarget returns ratings for a specific target within an activity (DB-level filter).
+	GetByActivityAndTarget(activityID, targetID uint) ([]model.Rating, error)
 	Exists(activityID, raterID, targetID uint) (bool, error)
 	GetAverageByUserID(userID uint) (float64, error)
 	GetAveragesByUserIDs(userIDs []uint) (map[uint]float64, error)
@@ -68,6 +70,16 @@ func (r *ratingRepository) GetByTargetID(targetID uint) ([]model.Rating, error) 
 	err := r.db.Preload("Rater").Preload("Rater.Profile").Preload("Activity").
 		Where("target_id = ?", targetID).
 		Order("created_at desc").
+		Find(&ratings).Error
+	return ratings, err
+}
+
+// GetByActivityAndTarget returns ratings where target_id matches within an activity.
+// BE-M3 fix: avoids in-memory filtering by using a DB WHERE clause.
+func (r *ratingRepository) GetByActivityAndTarget(activityID, targetID uint) ([]model.Rating, error) {
+	var ratings []model.Rating
+	err := r.db.Preload("Rater").Preload("Rater.Profile").
+		Where("activity_id = ? AND target_id = ?", activityID, targetID).
 		Find(&ratings).Error
 	return ratings, err
 }

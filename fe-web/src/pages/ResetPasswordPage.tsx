@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { Eye, EyeOff, Lock } from 'lucide-react';
 
-interface ResetPasswordPageProps {
-    onNavigate: (view: any) => void;
-}
-
-const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate }) => {
+const ResetPasswordPage: React.FC = () => {
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [token, setToken] = useState<string | null>(null);
 
     const [password, setPassword] = useState('');
@@ -16,16 +15,14 @@ const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate }) => 
     const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
-        const searchParams = new URLSearchParams(window.location.search);
         const tokenFromUrl = searchParams.get('token');
-
         if (tokenFromUrl) {
             setToken(tokenFromUrl);
         } else {
             setStatus('error');
             setErrorMessage('無效的重設連結');
         }
-    }, []);
+    }, [searchParams]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -49,7 +46,7 @@ const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate }) => 
             await authService.resetPassword(token, password);
             setStatus('success');
             setTimeout(() => {
-                onNavigate('login'); // Redirect to login
+                navigate('/login'); // Redirect to login
             }, 3000);
         } catch (error: any) {
             setStatus('error');
@@ -67,7 +64,7 @@ const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate }) => 
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">無效的連結</h2>
                     <p className="text-gray-500 mb-6">此重設連結無效或已過期，請重新申請。</p>
                     <button
-                        onClick={() => onNavigate('selection')}
+                        onClick={() => navigate('/')}
                         className="w-full h-12 rounded-full bg-[#009bcd] text-white font-bold hover:bg-[#0089b6] transition-colors"
                     >
                         返回首頁
@@ -89,7 +86,7 @@ const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate }) => 
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">密碼重設成功</h2>
                         <p className="text-gray-500 mb-6">您的密碼已更新，正在跳轉至登入頁面...</p>
                         <button
-                            onClick={() => onNavigate('login')}
+                            onClick={() => navigate('/login')}
                             className="w-full h-12 rounded-full bg-[#009bcd] text-white font-bold hover:bg-[#0089b6] transition-colors"
                         >
                             立即登入

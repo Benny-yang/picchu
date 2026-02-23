@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { IMG_BASE_URL } from '../../config';
 import { notificationService } from '../../services/notificationService';
-import { User } from 'lucide-react'; // Import User icon
+import { User } from 'lucide-react';
 import type { Notification } from '../../types';
 
 interface NotificationDropdownProps {
@@ -11,6 +12,7 @@ interface NotificationDropdownProps {
 }
 
 const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onClose, onNotificationClick }) => {
+    const navigate = useNavigate();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -54,9 +56,11 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
         }
 
         if (item.type === 'invitation') {
-            window.location.href = `?view=activities&id=${item.referenceId}`;
+            navigate(`/activities?id=${item.referenceId}`);
         } else if (item.type === 'work_like' || item.type === 'work_comment') {
-            window.location.href = `?view=works-wall&workId=${item.referenceId}`;
+            navigate(`/?workId=${item.referenceId}`);
+        } else if (item.type === 'activity_comment') {
+            navigate(`/activities?id=${item.referenceId}`);
         } else if (onNotificationClick) {
             onNotificationClick(item);
         }
@@ -69,6 +73,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
             case 'like': return '對你的作品按讚';
             case 'work_like': return '對你的作品按讚了';
             case 'work_comment': return '在你的作品留言了';
+            case 'activity_comment': return '在活動留言了';
             case 'join_request': return `申請加入 ${item.content || '活動'}`;
             case 'accepted': return `你的申請已被接受 ${item.content || ''}`;
             case 'rejected': return `你的申請未通過 ${item.content || ''}`;
@@ -122,7 +127,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             if (item.actor?.id) {
-                                                window.location.href = `?view=profile&uid=${item.actor.id}`;
+                                                navigate(`/profile/${item.actor.id}`);
                                             }
                                         }}
                                     />
@@ -132,7 +137,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             if (item.actor?.id) {
-                                                window.location.href = `?view=profile&uid=${item.actor.id}`;
+                                                navigate(`/profile/${item.actor.id}`);
                                             }
                                         }}
                                     >
@@ -146,7 +151,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 if (item.actor?.id) {
-                                                    window.location.href = `?view=profile&uid=${item.actor.id}`;
+                                                    navigate(`/profile/${item.actor.id}`);
                                                 }
                                             }}
                                         >

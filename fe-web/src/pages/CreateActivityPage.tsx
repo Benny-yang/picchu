@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import MainHeader from '../components/layout/MainHeader';
 import { activityService } from '../services/activityService';
 import { IMG_BASE_URL } from '../config';
@@ -8,6 +9,8 @@ interface CreateActivityPageProps {
 }
 
 const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) => {
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     // Basic form state - can be expanded later based on Figma details
     const [formData, setFormData] = useState({
         title: '',
@@ -28,9 +31,8 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const mode = params.get('mode');
-        const id = params.get('id');
+        const mode = searchParams.get('mode');
+        const id = searchParams.get('id');
 
         if (mode === 'edit' && id) {
             setIsEditMode(true);
@@ -105,7 +107,7 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
             };
             fetchActivity();
         }
-    }, []);
+    }, [searchParams]);
 
     const CITIES = [
         "基隆市", "新北市", "臺北市", "桃園市",
@@ -285,17 +287,16 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
 
 
 
-            const params = new URLSearchParams(window.location.search);
-            const editId = params.get('id');
+            const editId = searchParams.get('id');
 
             if (isEditMode && editId) {
                 await activityService.update(Number(editId), payload);
                 alert('活動更新成功！');
-                window.location.href = '?view=profile';
+                navigate('/profile');
             } else {
                 await activityService.create(payload);
                 alert('活動已成功建立！');
-                window.location.href = '?view=activities';
+                navigate('/activities');
             }
         } catch (error: any) {
             alert((isEditMode ? '更新' : '建立') + '失敗：' + (error.message || '未知錯誤'));
@@ -595,8 +596,8 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
                                 type="submit"
                                 disabled={isSubmitting}
                                 className={`w-full py-3.5 rounded-full font-bold transition-colors shadow-lg shadow-gray-200 flex items-center justify-center gap-2 ${isSubmitting
-                                        ? 'bg-gray-400 text-white cursor-not-allowed'
-                                        : 'bg-[#191919] text-white hover:bg-[#333333]'
+                                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                                    : 'bg-[#191919] text-white hover:bg-[#333333]'
                                     }`}
                             >
                                 {isSubmitting ? (

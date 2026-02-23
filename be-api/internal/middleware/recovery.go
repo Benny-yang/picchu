@@ -3,6 +3,7 @@ package middleware
 import (
 	"azure-magnetar/pkg/apperror"
 	"azure-magnetar/pkg/logger"
+	"azure-magnetar/pkg/response"
 	"fmt"
 	"net/http"
 	"runtime/debug"
@@ -16,20 +17,13 @@ func Recovery() gin.HandlerFunc {
 		defer func() {
 			if err := recover(); err != nil {
 				// Record stack trace
-				var stack []byte
-				stack = debug.Stack()
+				stack := debug.Stack()
 
 				// Log the panic with stack trace
 				logger.Error("Panic recovered", "error", fmt.Sprintf("%v", err), "stack", string(stack))
 
-				// Convert panic to standard API error
-				apiErr := apperror.New(apperror.CodeInternal, "Internal Server Error")
-
-				// Abort with JSON response
-				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-					"code":    apiErr.Code,
-					"message": apiErr.Message,
-				})
+				// BE-L2 fix: use response package for consistent error format
+				response.Error(c, http.StatusInternalServerError, apperror.New(apperror.CodeInternal, "Internal Server Error").Message)
 			}
 		}()
 		c.Next()

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import MainHeader from '../components/layout/MainHeader';
 import ActivityDetailModal from '../components/activities/ActivityDetailModal';
 import ActivityCard from '../components/activities/ActivityCard';
@@ -11,6 +12,8 @@ interface ActivitiesPageProps {
 }
 
 const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ currentUser }) => {
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState("熱門");
     const [selectedActivity, setSelectedActivity] = useState<any>(null);
     const [activities, setActivities] = useState<any[]>([]);
@@ -52,8 +55,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ currentUser }) => {
 
     // Check for URL param 'id' to open specific activity
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const activityId = params.get('id');
+        const activityId = searchParams.get('id');
         if (activityId) {
             activityService.getById(Number(activityId)).then(data => {
                 if (data) {
@@ -61,7 +63,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ currentUser }) => {
                 }
             }).catch(err => console.error("Failed to load activity from URL", err));
         }
-    }, []);
+    }, [searchParams]);
 
     return (
         <div className="w-full min-h-screen bg-gray-50 flex flex-col">
@@ -120,7 +122,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ currentUser }) => {
                         message="目前沒有活動"
                         description={currentUser ? "目前還沒有任何活動，您可以成為第一個舉辦活動的人！" : "目前還沒有任何活動"}
                         actionLabel={currentUser ? "舉辦活動" : undefined}
-                        onAction={currentUser ? () => window.location.href = '?view=create-activity' : undefined}
+                        onAction={currentUser ? () => navigate('/activities/create') : undefined}
                     />
                 )}
             </div>

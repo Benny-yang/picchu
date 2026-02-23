@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Check } from 'lucide-react';
-
 import { formatRelativeTime } from '../../utils/dateUtils';
 
 interface WorkDescriptionSectionProps {
@@ -18,7 +18,7 @@ const WorkDescriptionSection: React.FC<WorkDescriptionSectionProps> = ({
     onSave,
     onCancelEdit
 }) => {
-    // Local state for the edit input to avoid parent re-renders on every keystroke
+    const navigate = useNavigate();
     const [editValue, setEditValue] = useState(description);
 
     // Sync local state when entering edit mode
@@ -30,8 +30,6 @@ const WorkDescriptionSection: React.FC<WorkDescriptionSectionProps> = ({
 
     const renderDescription = (text: string) => {
         if (!text) return null;
-        // Split by hashtags (basic implementation: starts with #, followed by non-whitespace)
-        // Using capturing group () to include the separator in the result
         return text.split(/(#[^\s#]+)/g).map((part, index) => {
             if (part.startsWith('#') && part.length > 1) {
                 return (
@@ -40,8 +38,7 @@ const WorkDescriptionSection: React.FC<WorkDescriptionSectionProps> = ({
                         className="text-[#009bcd] hover:underline cursor-pointer font-medium"
                         onClick={(e) => {
                             e.stopPropagation();
-                            // Navigate to home with search query
-                            window.location.href = `/?search=${encodeURIComponent(part)}`;
+                            navigate(`/?search=${encodeURIComponent(part)}`);
                         }}
                     >
                         {part}

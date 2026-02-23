@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { notificationService } from '../../services/notificationService';
 import { Heart, Menu, User, PlusCircle } from 'lucide-react';
 import NotificationDropdown from './NotificationDropdown';
@@ -14,6 +15,7 @@ interface MainHeaderProps {
 }
 
 const MainHeader: React.FC<MainHeaderProps> = ({ activePage, currentUser }) => {
+    const navigate = useNavigate();
     const [showNotifications, setShowNotifications] = useState(false);
     const [reviewActivityId, setReviewActivityId] = useState<number | null>(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -42,7 +44,6 @@ const MainHeader: React.FC<MainHeaderProps> = ({ activePage, currentUser }) => {
 
     const handleNotificationClick = (notification: any) => {
         if (notification.type === 'join_request') {
-            // notification.referenceId is the activity ID
             setReviewActivityId(Number(notification.referenceId));
             setShowNotifications(false);
         }
@@ -51,11 +52,11 @@ const MainHeader: React.FC<MainHeaderProps> = ({ activePage, currentUser }) => {
     const handleCreateClick = () => {
         if (!currentUser) {
             if (confirm("請先登入才能舉辦活動")) {
-                window.location.href = '?view=selection';
+                navigate('/login');
             }
             return;
         }
-        window.location.href = '?view=create-activity';
+        navigate('/activities/create');
     };
 
     let avatarSrc = currentUser?.profile?.avatarUrl || currentUser?.avatarUrl;
@@ -75,7 +76,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({ activePage, currentUser }) => {
                 {/* Left Section: Logo */}
                 <div
                     className="flex items-center mr-8 cursor-pointer text-grey-black"
-                    onClick={() => window.location.href = '?view=works-wall'}
+                    onClick={() => navigate('/')}
                 >
                     <svg width="101" height="16" viewBox="0 0 101 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <g id="Group">
@@ -94,7 +95,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({ activePage, currentUser }) => {
                     {/* Gallery (Works Wall) */}
                     <button
                         className="hover:opacity-70 transition-opacity"
-                        onClick={() => window.location.href = '?view=works-wall'}
+                        onClick={() => navigate('/')}
                     >
                         <img
                             src={activePage === 'works-wall' ? "/assets/gallery_icon.png" : "/assets/gallery_gray_icon.png"}
@@ -106,7 +107,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({ activePage, currentUser }) => {
                     {/* Wave (Activities) */}
                     <button
                         className="hover:opacity-70 transition-opacity"
-                        onClick={() => window.location.href = '?view=activities'}
+                        onClick={() => navigate('/activities')}
                     >
                         <img
                             src={activePage === 'activities' ? "/assets/gradient_wave_icon.png" : "/assets/wave_icon.png"}
@@ -195,7 +196,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({ activePage, currentUser }) => {
                     ) : (
                         /* Login/Register Button for Guests */
                         <button
-                            onClick={() => window.location.href = '?view=selection'}
+                            onClick={() => navigate('/login')}
                             className="px-6 py-2 rounded-full bg-gradient-to-r from-[#F2994A] to-[#009bcd] text-white font-bold text-sm hover:opacity-90 transition-opacity"
                         >
                             登入 / 註冊
@@ -205,7 +206,6 @@ const MainHeader: React.FC<MainHeaderProps> = ({ activePage, currentUser }) => {
 
                 {/* Mobile Menu Button */}
                 <div className="flex md:hidden items-center gap-4">
-                    {/* Notifications (Heart) - Visible on Mobile too, just icon */}
                     <div className="relative" ref={notificationRef}>
                         <button
                             className="hover:opacity-70 transition-opacity flex items-center justify-center"
@@ -222,7 +222,6 @@ const MainHeader: React.FC<MainHeaderProps> = ({ activePage, currentUser }) => {
                             ) : (
                                 <Heart className="w-6 h-6 text-grey-1" />
                             )}
-                            {/* Notification Dot */}
                             {unreadCount > 0 && (
                                 <div className="absolute top-0 right-0 w-2 h-2 bg-alert-default rounded-full border border-white"></div>
                             )}
