@@ -11,7 +11,7 @@ interface SettingsPageProps {
 }
 
 const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser, setCurrentUser }) => {
-    const [activeTab, setActiveTab] = useState<'account' | 'profile' | 'terms' | 'privacy'>('account');
+    const [activeTab, setActiveTab] = useState<'account' | 'profile' | 'terms' | 'privacy' | 'contact'>('account');
     const [isLoading, setIsLoading] = useState(false);
 
     // Check URL params for initial tab
@@ -181,6 +181,15 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser, setCurrentUser
                                 }`}
                         >
                             隱私權條款
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('contact')}
+                            className={`px-4 py-3 text-left rounded-lg text-sm font-medium transition-colors ${activeTab === 'contact'
+                                ? 'bg-white text-secondary-blue shadow-sm'
+                                : 'text-grey-1 hover:bg-white hover:text-grey-black'
+                                }`}
+                        >
+                            聯絡我們
                         </button>
                     </nav>
                 </div>
@@ -373,6 +382,18 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser, setCurrentUser
                         <div className="space-y-8">
                             <h2 className="text-xl font-bold text-gray-900 border-b pb-4">隱私權條款</h2>
                             <PrivacyContent />
+                        </div>
+                    )}
+
+                    {activeTab === 'contact' && (
+                        <div className="space-y-8">
+                            <h2 className="text-xl font-bold text-gray-900 border-b pb-4">聯絡我們</h2>
+                            <div className="text-gray-700 leading-relaxed text-[15px]">
+                                <p>若有任何問題或建議，歡迎透過電子信箱與我們聯繫：</p>
+                                <p className="mt-2 font-medium text-[#009bcd]">
+                                    <a href="mailto:phongi.living@gmail.com" className="hover:underline">phongi.living@gmail.com</a>
+                                </p>
+                            </div>
                         </div>
                     )}
 
