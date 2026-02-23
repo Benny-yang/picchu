@@ -179,10 +179,36 @@ function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(() => tokenManager.getUser());
 
   useEffect(() => {
+    // Save to tokenManager whenever currentUser changes
     if (currentUser) {
       tokenManager.saveUser(currentUser);
     }
   }, [currentUser]);
+
+  // Validate session on app mount
+  useEffect(() => {
+    let isMounted = true;
+    if (tokenManager.isLoggedIn()) {
+      authService.getMe()
+        .then((user) => {
+          if (isMounted) {
+            if (!user || user.error) {
+              tokenManager.clearAll();
+              setCurrentUser(null);
+            } else {
+              setCurrentUser(user);
+            }
+          }
+        })
+        .catch(() => {
+          if (isMounted) {
+            tokenManager.clearAll();
+            setCurrentUser(null);
+          }
+        });
+    }
+    return () => { isMounted = false; };
+  }, []);
 
   return (
     <UserContext.Provider value={{ currentUser, setCurrentUser }}>
