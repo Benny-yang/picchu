@@ -135,7 +135,7 @@ echo -e "${GREEN}Backend deployed at: $BACKEND_URL${NC}"
 # 5. Deploy Frontend
 echo -e "${YELLOW}Building and Deploying Frontend Web App...${NC}"
 echo "VITE_API_URL=$BACKEND_URL/api/v1" > ./fe-web/.env.production
-echo "VITE_IMG_BASE_URL=$BACKEND_URL" >> ./fe-web/.env.production
+echo "VITE_IMG_BASE_URL=https://wispy-water-7e2a.cfst906609.workers.dev" >> ./fe-web/.env.production
 
 gcloud builds submit ./fe-web \
     --tag $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/fe-web:latest
