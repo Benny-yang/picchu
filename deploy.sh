@@ -14,11 +14,15 @@ ENVIRONMENT="${ENVIRONMENT:-test}"
 
 if [ "$ENVIRONMENT" = "production" ]; then
     DB_NAME="vibe_coding"
+    SERVICE_SUFFIX=""
 else
     DB_NAME="vibe_coding_test"
+    SERVICE_SUFFIX="-test"
 fi
 
 DB_USER="root"
+BE_SERVICE_NAME="be-api${SERVICE_SUFFIX}"
+FE_SERVICE_NAME="fe-web${SERVICE_SUFFIX}"
 GCS_BUCKET_NAME="${PROJECT_ID}-uploads"
 
 # Colors for output
@@ -117,11 +121,11 @@ gcloud storage buckets add-iam-policy-binding gs://$GCS_BUCKET_NAME \
 # 4. Deploy Backend
 echo -e "${YELLOW}Building and Deploying Backend API...${NC}"
 gcloud builds submit ./be-api \
-    --tag $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/be-api:latest
+    --tag $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/${BE_SERVICE_NAME}:latest
 
 echo -e "${YELLOW}Deploying Backend to Cloud Run...${NC}"
-gcloud run deploy be-api \
-    --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/be-api:latest \
+gcloud run deploy ${BE_SERVICE_NAME} \
+    --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/${BE_SERVICE_NAME}:latest \
     --platform managed \
     --region $REGION \
     --allow-unauthenticated \
@@ -129,7 +133,7 @@ gcloud run deploy be-api \
     --add-cloudsql-instances $PROJECT_ID:$REGION:$SQL_INSTANCE_NAME
 
 # Get Backend URL
-BACKEND_URL=$(gcloud run services describe be-api --platform managed --region $REGION --format 'value(status.url)')
+BACKEND_URL=$(gcloud run services describe ${BE_SERVICE_NAME} --platform managed --region $REGION --format 'value(status.url)')
 echo -e "${GREEN}Backend deployed at: $BACKEND_URL${NC}"
 
 # 5. Deploy Frontend
@@ -138,20 +142,20 @@ echo "VITE_API_URL=$BACKEND_URL/api/v1" > ./fe-web/.env.production
 echo "VITE_IMG_BASE_URL=https://wispy-water-7e2a.cfst906609.workers.dev" >> ./fe-web/.env.production
 
 gcloud builds submit ./fe-web \
-    --tag $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/fe-web:latest
+    --tag $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/${FE_SERVICE_NAME}:latest
 
 echo -e "${YELLOW}Deploying Frontend to Cloud Run...${NC}"
-gcloud run deploy fe-web \
-    --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/fe-web:latest \
+gcloud run deploy ${FE_SERVICE_NAME} \
+    --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/${FE_SERVICE_NAME}:latest \
     --platform managed \
     --region $REGION \
     --allow-unauthenticated
 
-FRONTEND_URL=$(gcloud run services describe fe-web --platform managed --region $REGION --format 'value(status.url)')
+FRONTEND_URL=$(gcloud run services describe ${FE_SERVICE_NAME} --platform managed --region $REGION --format 'value(status.url)')
 echo -e "${GREEN}Frontend deployed at: $FRONTEND_URL${NC}"
 
 echo -e "${YELLOW}Updating Backend with Full Environment Variables...${NC}"
-gcloud run services update be-api \
+gcloud run services update ${BE_SERVICE_NAME} \
     --region $REGION \
     --update-env-vars="API_BASE_URL=$BACKEND_URL,FRONTEND_URL=$FRONTEND_URL,RESEND_API_KEY=re_KETvX7en_BD7YaQXGFYrRpRL7VmMbZJWQ"
 
