@@ -368,6 +368,10 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ currentUser: propUser
             <WorkDetailModal
                 isOpen={!!selectedWork}
                 onClose={() => setSelectedWork(null)}
+                onDeleted={(deletedId) => {
+                    setWorks(prev => prev.filter((w: any) => w.id !== deletedId));
+                    setSelectedWork(null);
+                }}
                 workId={selectedWork?.id || selectedWork?.ID || 0}
                 initialData={{
                     imageUrl: selectedWork?.coverUrl || selectedWork?.images?.[0] || '',

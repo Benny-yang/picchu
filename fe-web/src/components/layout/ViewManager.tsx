@@ -190,7 +190,7 @@ const ViewManager: React.FC<ViewManagerProps> = ({
                                     const updatedUser = await authService.updateProfile(payload);
                                     setCurrentUser(updatedUser);
                                     alert('資料更新成功！');
-                                    window.location.href = '?view=profile';
+                                    window.location.href = '/profile';
                                 } catch (error: any) {
                                     console.error('Update profile failed:', error);
                                     alert('保存失敗：' + (error.message || '未知錯誤'));
@@ -206,7 +206,7 @@ const ViewManager: React.FC<ViewManagerProps> = ({
         case 'profile': return <div className="w-full h-full"><UserProfilePage currentUser={currentUser} /></div>;
         case 'settings': return <div className="w-full h-full"><SettingsPage currentUser={currentUser} setCurrentUser={setCurrentUser} /></div>;
         case 'activity-application-history': return <div className="w-full h-full"><ActivityApplicationHistoryPage currentUser={currentUser} /></div>;
-        case 'reset-password': return <ResetPasswordPage onNavigate={setView} />;
+        case 'reset-password': return <div className="w-full h-full"><ResetPasswordPage /></div>;
         case '404':
         default:
             return <NotFoundPage />;

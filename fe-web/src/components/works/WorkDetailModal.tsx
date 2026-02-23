@@ -12,6 +12,7 @@ import { IMG_BASE_URL } from '../../config';
 interface WorkDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onDeleted?: (workId: number) => void;
     workId: number;
     // Optional initial data for smooth transition
     initialData?: {
@@ -25,6 +26,7 @@ interface WorkDetailModalProps {
 const WorkDetailModal: React.FC<WorkDetailModalProps> = ({
     isOpen,
     onClose,
+    onDeleted,
     workId,
     initialData,
     allowEdit = false
@@ -110,10 +112,8 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({
         if (confirm('確定要刪除此作品嗎？此操作無法復原。')) {
             try {
                 await workService.remove(workId);
-                alert('作品已刪除');
+                onDeleted?.(workId);
                 onClose();
-                // Trigger refresh in parent? Parent should listen to close?
-                // window.location.reload(); // Simple brute force
             } catch (err) {
                 alert("刪除失敗");
             }

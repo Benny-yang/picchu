@@ -17,9 +17,32 @@ interface ActivityDetailModalProps {
     currentUser?: any;
 }
 
+/** Maps backend Apply error messages to user-friendly Traditional Chinese. */
+function resolveApplyErrorMessage(
+    msg: string,
+    setIsNotFound: (v: boolean) => void
+): string {
+    const lower = msg.toLowerCase();
+    if (lower.includes('not found') || lower.includes('activity not found')) {
+        setIsNotFound(true);
+        return '此活動已不存在，無法申請。';
+    }
+    if (lower.includes('not open for applications')) {
+        return '此活動目前不開放申請（可能已額滿、已結束或已取消）。';
+    }
+    if (lower.includes('host cannot apply')) {
+        return '您是此活動的主辦人，無法申請加入。';
+    }
+    if (lower.includes('already applied')) {
+        return '您已申請過此活動，請勿重複申請。';
+    }
+    return '申請失敗：' + (msg || '未知錯誤');
+}
+
 const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onClose, currentUser }) => {
     const [details, setDetails] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isActivityNotFound, setIsActivityNotFound] = useState(false);
     const [showApplicationModal, setShowApplicationModal] = useState(false);
     const [showManagementModal, setShowManagementModal] = useState(false);
     const [showRatingModal, setShowRatingModal] = useState(false);
@@ -69,6 +92,7 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
                 }
             } catch (error) {
                 console.error('Failed to load activity details:', error);
+                setIsActivityNotFound(true);
             } finally {
                 setIsLoading(false);
             }
@@ -86,7 +110,9 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
             await activityService.apply(activityId, message);
             setStatus('applied');
         } catch (error: any) {
-            alert('申請失敗：' + (error.message || '未知錯誤'));
+            const msg: string = error?.message || error?.response?.data?.message || '';
+            const friendlyMessage = resolveApplyErrorMessage(msg, setIsActivityNotFound);
+            alert(friendlyMessage);
         }
     };
 
@@ -193,6 +219,14 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
                 {/* Right: Info */}
                 <div className="w-full md:w-1/2 p-8 overflow-y-auto flex flex-col relative">
 
+                    {/* Activity Not Found Banner */}
+                    {isActivityNotFound && (
+                        <div className="mb-4 py-3 px-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-600 text-sm font-medium">
+                            <span>⚠️</span>
+                            <span>此活動已不存在或已被刪除，無法進行申請。</span>
+                        </div>
+                    )}
+
                     {/* Header: User Info */}
                     <div className="flex items-center justify-between mb-6">
                         <UserInfo
@@ -268,6 +302,7 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
                     <ActivityActionButtons
                         status={status}
                         isEnded={isEnded}
+                        isActivityNotFound={isActivityNotFound}
                         displayData={displayData}
                         activityId={activityId}
                         onShowManagementModal={() => setShowManagementModal(true)}

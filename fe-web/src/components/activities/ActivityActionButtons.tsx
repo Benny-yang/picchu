@@ -5,6 +5,7 @@ import { Users, Star } from 'lucide-react';
 interface ActivityActionButtonsProps {
     status: 'idle' | 'applied' | 'joined' | 'isHost' | 'rejected';
     isEnded: boolean;
+    isActivityNotFound?: boolean;
     displayData: any;
     activityId: string | number;
     onShowManagementModal: () => void;
@@ -18,6 +19,7 @@ interface ActivityActionButtonsProps {
 const ActivityActionButtons: React.FC<ActivityActionButtonsProps> = ({
     status,
     isEnded,
+    isActivityNotFound = false,
     displayData,
     activityId,
     onShowManagementModal,
@@ -91,13 +93,22 @@ const ActivityActionButtons: React.FC<ActivityActionButtonsProps> = ({
                         </button>
                     ) : (
                         currentUser ? (
-                            <button
-                                onClick={onShowApplicationModal}
-                                className="px-12 py-2.5 rounded-full text-white font-bold text-base shadow-md hover:shadow-lg hover:opacity-95 transition-all transform active:scale-95"
-                                style={{ background: "linear-gradient(90deg, #FDBB2D 0%, #22C1C3 100%)" }}
-                            >
-                                申請加入
-                            </button>
+                            isActivityNotFound ? (
+                                <button
+                                    disabled
+                                    className="px-12 py-2.5 rounded-full bg-gray-300 text-white font-bold text-base cursor-not-allowed"
+                                >
+                                    活動已不存在
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={onShowApplicationModal}
+                                    className="px-12 py-2.5 rounded-full text-white font-bold text-base shadow-md hover:shadow-lg hover:opacity-95 transition-all transform active:scale-95"
+                                    style={{ background: "linear-gradient(90deg, #FDBB2D 0%, #22C1C3 100%)" }}
+                                >
+                                    申請加入
+                                </button>
+                            )
                         ) : (
                             <button
                                 disabled

@@ -10,6 +10,41 @@ import (
 	"azure-magnetar/internal/service"
 )
 
+type mockCommentRepo struct{}
+
+func (m *mockCommentRepo) Create(comment *model.Comment) error {
+	comment.ID = 1
+	return nil
+}
+
+func (m *mockCommentRepo) GetByWorkID(workID uint) ([]model.Comment, error) {
+	return nil, nil
+}
+
+func (m *mockCommentRepo) GetByActivityID(activityID uint) ([]model.Comment, error) {
+	return nil, nil
+}
+
+func (m *mockCommentRepo) Update(comment *model.Comment) error {
+	return nil
+}
+
+func (m *mockCommentRepo) Delete(id uint) error {
+	return nil
+}
+
+func (m *mockCommentRepo) GetByID(id uint) (*model.Comment, error) {
+	return &model.Comment{ID: id}, nil
+}
+
+func newMockCommentRepo() *mockCommentRepo {
+	return &mockCommentRepo{}
+}
+
+// ==============
+// Mock RatingRepository
+// ==============---
+
 // --- Mock Activity Repository ---
 
 type mockActivityRepo struct {
@@ -178,7 +213,7 @@ func (m *mockNotificationService) GetUnreadCount(userID uint) (int64, error) {
 func TestCreateActivity(t *testing.T) {
 	repo := newMockActivityRepo()
 	notif := newMockNotificationService()
-	svc := service.NewActivityService(repo, notif, newMockRatingRepo(), "http://localhost:8080")
+	svc := service.NewActivityService(repo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", notif)
 
 	input := service.CreateActivityInput{
 		Title:       "Test Activity",
@@ -203,7 +238,7 @@ func TestCreateActivity(t *testing.T) {
 
 func TestUpdateActivity_OnlyHost(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+	svc := service.NewActivityService(repo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", newMockNotificationService())
 
 	input := service.CreateActivityInput{Title: "Test Activity"}
 	activity, _ := svc.Create(1, input)
@@ -226,7 +261,7 @@ func TestUpdateActivity_OnlyHost(t *testing.T) {
 
 func TestDeleteActivity_OnlyHost(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+	svc := service.NewActivityService(repo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", newMockNotificationService())
 
 	input := service.CreateActivityInput{Title: "Test Activity"}
 	activity, _ := svc.Create(1, input)
@@ -244,7 +279,7 @@ func TestDeleteActivity_OnlyHost(t *testing.T) {
 
 func TestApply_HostCannotApply(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+	svc := service.NewActivityService(repo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", newMockNotificationService())
 
 	input := service.CreateActivityInput{Title: "Test Activity"}
 	activity, _ := svc.Create(1, input)
@@ -257,7 +292,7 @@ func TestApply_HostCannotApply(t *testing.T) {
 
 func TestApply_Success(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+	svc := service.NewActivityService(repo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", newMockNotificationService())
 
 	input := service.CreateActivityInput{Title: "Test Activity", MaxParticipants: 10}
 	activity, _ := svc.Create(1, input)
@@ -270,7 +305,7 @@ func TestApply_Success(t *testing.T) {
 
 func TestApply_Duplicate(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+	svc := service.NewActivityService(repo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", newMockNotificationService())
 
 	input := service.CreateActivityInput{Title: "Test Activity", MaxParticipants: 10}
 	activity, _ := svc.Create(1, input)
@@ -284,7 +319,7 @@ func TestApply_Duplicate(t *testing.T) {
 
 func TestApply_NotOpenActivity(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+	svc := service.NewActivityService(repo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", newMockNotificationService())
 
 	input := service.CreateActivityInput{Title: "Test Activity", MaxParticipants: 10}
 	activity, _ := svc.Create(1, input)
@@ -299,7 +334,7 @@ func TestApply_NotOpenActivity(t *testing.T) {
 
 func TestGetUserStatus(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+	svc := service.NewActivityService(repo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", newMockNotificationService())
 
 	input := service.CreateActivityInput{Title: "Test Activity", MaxParticipants: 10}
 	activity, _ := svc.Create(1, input)
@@ -326,7 +361,7 @@ func TestGetUserStatus(t *testing.T) {
 
 func TestUpdateApplicantStatus_OnlyHost(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+	svc := service.NewActivityService(repo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", newMockNotificationService())
 
 	input := service.CreateActivityInput{Title: "Test Activity", MaxParticipants: 10}
 	activity, _ := svc.Create(1, input)
@@ -347,7 +382,7 @@ func TestUpdateApplicantStatus_OnlyHost(t *testing.T) {
 
 func TestUpdateApplicantStatus_InvalidStatus(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+	svc := service.NewActivityService(repo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", newMockNotificationService())
 
 	input := service.CreateActivityInput{Title: "Test Activity", MaxParticipants: 10}
 	activity, _ := svc.Create(1, input)
@@ -361,7 +396,7 @@ func TestUpdateApplicantStatus_InvalidStatus(t *testing.T) {
 
 func TestCreateActivity_EventTimeWithTimezoneOffset(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+	svc := service.NewActivityService(repo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", newMockNotificationService())
 
 	input := service.CreateActivityInput{
 		Title:     "Timezone Test",
@@ -404,7 +439,7 @@ func TestCreateActivity_EventTimeWithTimezoneOffset(t *testing.T) {
 
 func TestCreateActivity_EventTimeWithoutOffset(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+	svc := service.NewActivityService(repo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", newMockNotificationService())
 
 	input := service.CreateActivityInput{
 		Title:     "No Offset Test",
@@ -427,7 +462,7 @@ func TestCreateActivity_EventTimeWithoutOffset(t *testing.T) {
 
 func TestGetByID_AutoEndExpiredActivity(t *testing.T) {
 	repo := newMockActivityRepo()
-	svc := service.NewActivityService(repo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+	svc := service.NewActivityService(repo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", newMockNotificationService())
 
 	// Create an activity with an event time in the past (1 hour ago)
 	input := service.CreateActivityInput{

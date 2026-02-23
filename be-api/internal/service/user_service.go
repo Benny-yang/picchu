@@ -56,16 +56,18 @@ type userService struct {
 	ratingRepo  repository.RatingRepository
 	apiBaseURL  string
 	frontendURL string
+	gcsBucket   string
 }
 
 // NewUserService creates a new UserService.
-func NewUserService(repo repository.UserRepository, followRepo repository.FollowRepository, ratingRepo repository.RatingRepository, apiBaseURL, frontendURL string) UserService {
+func NewUserService(repo repository.UserRepository, followRepo repository.FollowRepository, ratingRepo repository.RatingRepository, apiBaseURL, frontendURL, gcsBucket string) UserService {
 	return &userService{
 		repo:        repo,
 		followRepo:  followRepo,
 		ratingRepo:  ratingRepo,
 		apiBaseURL:  apiBaseURL,
 		frontendURL: frontendURL,
+		gcsBucket:   gcsBucket,
 	}
 }
 
@@ -194,7 +196,7 @@ func (s *userService) UpdateProfile(userID uint, input UpdateProfileInput) (*mod
 	}
 
 	if input.AvatarBase64 != "" {
-		avatarURL, err := storage.SaveBase64Image(s.apiBaseURL, "avatars", userID, input.AvatarBase64, 0)
+		avatarURL, err := storage.SaveBase64Image(s.apiBaseURL, s.gcsBucket, "avatars", userID, input.AvatarBase64, 0)
 		if err != nil {
 			return nil, fmt.Errorf("failed to save avatar: %w", err)
 		}

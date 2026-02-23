@@ -247,7 +247,7 @@ func (h *ActivityHandler) ApplyToActivity(c *gin.Context) {
 	_ = c.ShouldBindJSON(&input) // message is optional
 
 	if err := h.activityService.Apply(activityID, userID, input.Message); err != nil {
-		response.Error(c, http.StatusBadRequest, err.Error())
+		HandleServiceError(c, err)
 		return
 	}
 

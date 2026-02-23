@@ -16,6 +16,7 @@ type Config struct {
 	JWTSecret      string `mapstructure:"jwt_secret"`
 	FrontendURL    string `mapstructure:"frontend_url"`
 	APIBaseURL     string `mapstructure:"api_base_url"`
+	GCSBucketName  string `mapstructure:"gcs_bucket_name"`
 }
 
 // LoadConfig reads configuration from environment variables or config files.
@@ -44,6 +45,7 @@ func LoadConfig() *Config {
 	_ = viper.BindEnv("jwt_secret", "JWT_SECRET")
 	_ = viper.BindEnv("frontend_url", "FRONTEND_URL")
 	_ = viper.BindEnv("api_base_url", "API_BASE_URL")
+	_ = viper.BindEnv("gcs_bucket_name", "GCS_BUCKET_NAME")
 
 	// Read config file if exists
 	if err := viper.ReadInConfig(); err != nil {

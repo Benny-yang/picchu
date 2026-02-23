@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"azure-magnetar/internal/model"
@@ -80,18 +81,22 @@ type UpdateApplicantStatusInput struct {
 
 type activityService struct {
 	repo         repository.ActivityRepository
+	commentRepo  repository.CommentRepository
+	apiBaseURL   string
+	gcsBucket    string
 	notifService NotificationService
 	ratingRepo   repository.RatingRepository
-	apiBaseURL   string
 }
 
 // NewActivityService creates a new ActivityService.
-func NewActivityService(repo repository.ActivityRepository, notifService NotificationService, ratingRepo repository.RatingRepository, apiBaseURL string) ActivityService {
+func NewActivityService(repo repository.ActivityRepository, commentRepo repository.CommentRepository, ratingRepo repository.RatingRepository, apiBaseURL, gcsBucket string, notifService NotificationService) ActivityService {
 	return &activityService{
 		repo:         repo,
-		notifService: notifService,
+		commentRepo:  commentRepo,
 		ratingRepo:   ratingRepo,
 		apiBaseURL:   apiBaseURL,
+		gcsBucket:    gcsBucket,
+		notifService: notifService,
 	}
 }
 
@@ -99,9 +104,9 @@ func (s *activityService) Create(hostID uint, input CreateActivityInput) (*model
 	var imageURLs []string
 	if len(input.Images) > 0 {
 		for i, imgBase64 := range input.Images {
-			url, err := storage.SaveBase64Image(s.apiBaseURL, "activities", hostID, imgBase64, i)
+			url, err := storage.SaveBase64Image(s.apiBaseURL, s.gcsBucket, "activities", hostID, imgBase64, i)
 			if err != nil {
-				return nil, fmt.Errorf("failed to save image: %w", err)
+				return nil, fmt.Errorf("failed to save image %d: %w", i, err)
 			}
 			imageURLs = append(imageURLs, url)
 		}
@@ -209,18 +214,16 @@ func (s *activityService) Update(userID, activityID uint, input UpdateActivityIn
 	if len(input.Images) > 0 {
 		var imageURLs []string
 		for i, imgStr := range input.Images {
-			// Check if it's an existing URL
-			if len(imgStr) > 4 && imgStr[:4] == "http" {
+			// Basic heuristic: if it's already a URL, keep it
+			if strings.HasPrefix(imgStr, "http") {
 				imageURLs = append(imageURLs, imgStr)
-				continue
+			} else {
+				url, err := storage.SaveBase64Image(s.apiBaseURL, s.gcsBucket, "activities", userID, imgStr, i)
+				if err != nil {
+					return nil, fmt.Errorf("failed to update image %d: %w", i, err)
+				}
+				imageURLs = append(imageURLs, url)
 			}
-
-			// Otherwise treat as new base64 image
-			url, err := storage.SaveBase64Image(s.apiBaseURL, "activities", userID, imgStr, i)
-			if err != nil {
-				return nil, fmt.Errorf("failed to save image: %w", err)
-			}
-			imageURLs = append(imageURLs, url)
 		}
 		activity.Images = imageURLs
 	}

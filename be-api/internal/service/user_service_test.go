@@ -103,7 +103,7 @@ func TestGetUserWithProfile_IncludesAverageRating(t *testing.T) {
 	_ = ratingRepo.Create(&model.Rating{ActivityID: 1, RaterID: 2, TargetID: user.ID, Score: 4})
 	_ = ratingRepo.Create(&model.Rating{ActivityID: 2, RaterID: 3, TargetID: user.ID, Score: 5})
 
-	svc := service.NewUserService(userRepo, followRepo, ratingRepo, "http://localhost:8080", "http://localhost:5173")
+	svc := service.NewUserService(userRepo, followRepo, ratingRepo, "http://localhost:8080", "http://localhost:5173", "")
 
 	result, err := svc.GetUserWithProfile(user.ID)
 	if err != nil {
@@ -124,7 +124,7 @@ func TestGetUserWithProfile_NoRatingsReturnsZero(t *testing.T) {
 	user := &model.User{UserName: "newuser", Email: "new@example.com", Password: "hashed"}
 	_ = userRepo.Create(user)
 
-	svc := service.NewUserService(userRepo, followRepo, ratingRepo, "http://localhost:8080", "http://localhost:5173")
+	svc := service.NewUserService(userRepo, followRepo, ratingRepo, "http://localhost:8080", "http://localhost:5173", "")
 
 	result, err := svc.GetUserWithProfile(user.ID)
 	if err != nil {
@@ -148,7 +148,7 @@ func TestGetUserWithProfile_ReturnsFollowCounts(t *testing.T) {
 	_ = followRepo.Create(&model.Follow{FollowerID: 10, FollowingID: user.ID})
 	_ = followRepo.Create(&model.Follow{FollowerID: 11, FollowingID: user.ID})
 
-	svc := service.NewUserService(userRepo, followRepo, ratingRepo, "http://localhost:8080", "http://localhost:5173")
+	svc := service.NewUserService(userRepo, followRepo, ratingRepo, "http://localhost:8080", "http://localhost:5173", "")
 
 	result, err := svc.GetUserWithProfile(user.ID)
 	if err != nil {

@@ -24,7 +24,7 @@ func TestSubmitRating_ActivityNotEnded(t *testing.T) {
 
 	// Create an open activity
 	input := service.CreateActivityInput{Title: "Open Activity"}
-	activitySvc := service.NewActivityService(activityRepo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+	activitySvc := service.NewActivityService(activityRepo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", newMockNotificationService())
 	activity, _ := activitySvc.Create(1, input)
 
 	err := svc.SubmitRating(activity.ID, 2, service.SubmitRatingInput{
@@ -41,7 +41,7 @@ func TestSubmitRating_SelfRating(t *testing.T) {
 	svc, activityRepo, _ := setupRatingTest()
 
 	input := service.CreateActivityInput{Title: "Ended Activity"}
-	activitySvc := service.NewActivityService(activityRepo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+	activitySvc := service.NewActivityService(activityRepo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", newMockNotificationService())
 	activity, _ := activitySvc.Create(1, input)
 	activity.Status = "ended"
 	_ = activityRepo.Update(activity)
@@ -59,7 +59,7 @@ func TestSubmitRating_InvalidScore(t *testing.T) {
 	svc, activityRepo, _ := setupRatingTest()
 
 	input := service.CreateActivityInput{Title: "Ended Activity"}
-	activitySvc := service.NewActivityService(activityRepo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+	activitySvc := service.NewActivityService(activityRepo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", newMockNotificationService())
 	activity, _ := activitySvc.Create(1, input)
 	activity.Status = "ended"
 	_ = activityRepo.Update(activity)
@@ -86,7 +86,7 @@ func TestSubmitRating_Success(t *testing.T) {
 
 	// Create activity while open, apply user 2, accept, then end the activity
 	input := service.CreateActivityInput{Title: "Test Activity", MaxParticipants: 10}
-	activitySvc := service.NewActivityService(activityRepo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+	activitySvc := service.NewActivityService(activityRepo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", newMockNotificationService())
 	activity, _ := activitySvc.Create(1, input)
 
 	// Apply while activity is still open
@@ -116,7 +116,7 @@ func TestSubmitRating_Duplicate(t *testing.T) {
 	svc, activityRepo, _ := setupRatingTest()
 
 	input := service.CreateActivityInput{Title: "Test Activity", MaxParticipants: 10}
-	activitySvc := service.NewActivityService(activityRepo, newMockNotificationService(), newMockRatingRepo(), "http://localhost:8080")
+	activitySvc := service.NewActivityService(activityRepo, newMockCommentRepo(), newMockRatingRepo(), "http://localhost:8080", "", newMockNotificationService())
 	activity, _ := activitySvc.Create(1, input)
 
 	// Apply while activity is still open

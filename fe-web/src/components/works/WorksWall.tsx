@@ -50,6 +50,11 @@ const WorksWall: React.FC<WorksWallProps> = ({ currentUser }) => {
         setActiveTab(tab);
     };
 
+    const handleWorkDeleted = (deletedWorkId: number) => {
+        setWorks(prev => prev.filter(w => w.id !== deletedWorkId));
+        setSelectedWork(null);
+    };
+
     return (
         <div className="w-full min-h-screen bg-gray-50 flex flex-col">
             {/* Header */}
@@ -118,6 +123,7 @@ const WorksWall: React.FC<WorksWallProps> = ({ currentUser }) => {
             <WorkDetailModal
                 isOpen={!!selectedWork}
                 onClose={() => setSelectedWork(null)}
+                onDeleted={handleWorkDeleted}
                 workId={selectedWork?.id || selectedWork?.ID || 0}
                 initialData={{
                     imageUrl: selectedWork?.coverUrl || selectedWork?.images?.[0] || '',

@@ -95,7 +95,7 @@ func (r *mockLikeRepo) IsLiked(userID, workID uint) (bool, error) {
 
 func TestCreateWork(t *testing.T) {
 	repo := newMockWorkRepo()
-	svc := service.NewWorkService(repo, "http://localhost:8080")
+	svc := service.NewWorkService(repo, "http://localhost:8080", "")
 
 	input := service.CreateWorkInput{
 		Images:      []string{"R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"},
@@ -118,7 +118,7 @@ func TestCreateWork(t *testing.T) {
 
 func TestUpdateWork_OnlyAuthor(t *testing.T) {
 	repo := newMockWorkRepo()
-	svc := service.NewWorkService(repo, "http://localhost:8080")
+	svc := service.NewWorkService(repo, "http://localhost:8080", "")
 
 	input := service.CreateWorkInput{Images: []string{"R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"}}
 	work, _ := svc.Create(1, input)
@@ -141,7 +141,7 @@ func TestUpdateWork_OnlyAuthor(t *testing.T) {
 
 func TestDeleteWork_OnlyAuthor(t *testing.T) {
 	repo := newMockWorkRepo()
-	svc := service.NewWorkService(repo, "http://localhost:8080")
+	svc := service.NewWorkService(repo, "http://localhost:8080", "")
 
 	input := service.CreateWorkInput{Images: []string{"R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"}}
 	work, _ := svc.Create(1, input)

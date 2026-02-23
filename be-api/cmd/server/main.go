@@ -136,10 +136,10 @@ func initRepositories() *repositories {
 
 func initServices(repos *repositories, cfg *config.Config) *services {
 	return &services{
-		user:         service.NewUserService(repos.user, repos.follow, repos.rating, cfg.APIBaseURL, cfg.FrontendURL),
+		user:         service.NewUserService(repos.user, repos.follow, repos.rating, cfg.APIBaseURL, cfg.FrontendURL, cfg.GCSBucketName),
 		follow:       service.NewFollowService(repos.follow, repos.rating, service.NewNotificationService(repos.notification)),
-		activity:     service.NewActivityService(repos.activity, service.NewNotificationService(repos.notification), repos.rating, cfg.APIBaseURL),
-		work:         service.NewWorkService(repos.work, cfg.APIBaseURL),
+		activity:     service.NewActivityService(repos.activity, repos.comment, repos.rating, cfg.APIBaseURL, cfg.GCSBucketName, service.NewNotificationService(repos.notification)),
+		work:         service.NewWorkService(repos.work, cfg.APIBaseURL, cfg.GCSBucketName),
 		comment:      service.NewCommentService(repos.comment, repos.work, repos.activity, repos.rating, service.NewNotificationService(repos.notification)),
 		like:         service.NewLikeService(repos.like, repos.work, service.NewNotificationService(repos.notification)),
 		rating:       service.NewRatingService(repos.rating, repos.activity),

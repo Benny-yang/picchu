@@ -96,7 +96,28 @@ func (r *workRepository) Update(post *model.Post) error {
 }
 
 func (r *workRepository) Delete(id uint) error {
-	return r.db.Delete(&model.Post{}, id).Error
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		var post model.Post
+		post.ID = id
+
+		// Clear many-to-many relationships (post_tags)
+		if err := tx.Model(&post).Association("Tags").Clear(); err != nil {
+			return err
+		}
+
+		// Delete all likes for this post
+		if err := tx.Where("work_id = ?", id).Delete(&model.Like{}).Error; err != nil {
+			return err
+		}
+
+		// Delete all comments for this post
+		if err := tx.Where("work_id = ?", id).Delete(&model.Comment{}).Error; err != nil {
+			return err
+		}
+
+		// Delete the post itself
+		return tx.Delete(&model.Post{}, id).Error
+	})
 }
 
 func (r *workRepository) GetByUserID(userID uint) ([]model.Post, error) {

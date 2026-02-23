@@ -58,11 +58,16 @@ type WallCursorParams struct {
 type workService struct {
 	repo       repository.WorkRepository
 	apiBaseURL string
+	gcsBucket  string
 }
 
 // NewWorkService creates a new WorkService.
-func NewWorkService(repo repository.WorkRepository, apiBaseURL string) WorkService {
-	return &workService{repo: repo, apiBaseURL: apiBaseURL}
+func NewWorkService(repo repository.WorkRepository, apiBaseURL, gcsBucket string) WorkService {
+	return &workService{
+		repo:       repo,
+		apiBaseURL: apiBaseURL,
+		gcsBucket:  gcsBucket,
+	}
 }
 
 func (s *workService) GetWall(filterType string, seed int64, cursorStr string, limit int, currentUserID uint) (*WallResponse, error) {
@@ -113,7 +118,7 @@ func (s *workService) Create(userID uint, input CreateWorkInput) (*model.Post, e
 
 	var imageURLs []string
 	for i, imgBase64 := range input.Images {
-		url, err := storage.SaveBase64Image(s.apiBaseURL, "works", userID, imgBase64, i)
+		url, err := storage.SaveBase64Image(s.apiBaseURL, s.gcsBucket, "works", userID, imgBase64, i)
 		if err != nil {
 			return nil, err
 		}

@@ -12,6 +12,7 @@ REPO_NAME="vibe-coding-repo"
 SQL_INSTANCE_NAME="vibe-coding-db"
 DB_NAME="vibe_coding"
 DB_USER="root"
+GCS_BUCKET_NAME="${PROJECT_ID}-uploads"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -37,7 +38,9 @@ gcloud services enable \
     artifactregistry.googleapis.com \
     run.googleapis.com \
     sqladmin.googleapis.com \
-    cloudbuild.googleapis.com
+    cloudbuild.googleapis.com \
+    storage-api.googleapis.com \
+    storage-component.googleapis.com
 
 # 2. Create Artifact Registry
 echo -e "${YELLOW}Checking/Creating Artifact Registry...${NC}"
@@ -53,9 +56,13 @@ fi
 
 # 3. Cloud SQL Setup
 echo -e "${YELLOW}Checking/Creating Cloud SQL Instance (This may take a while)...${NC}"
+# Use environment variable DB_PASSWORD if set, otherwise generate one
+if [ -z "$DB_PASSWORD" ]; then
+    DB_PASSWORD=$(openssl rand -base64 12)
+    echo -e "${YELLOW}Generated DB_PASSWORD: $DB_PASSWORD (Please save this!)${NC}"
+fi
+
 if ! gcloud sql instances describe $SQL_INSTANCE_NAME &> /dev/null; then
-    echo -e "${YELLOW}Enter password for DB root user:${NC}"
-    read -s DB_PASSWORD
     gcloud sql instances create $SQL_INSTANCE_NAME \
         --database-version=MYSQL_8_0 \
         --cpu=1 \
@@ -65,8 +72,7 @@ if ! gcloud sql instances describe $SQL_INSTANCE_NAME &> /dev/null; then
     echo -e "${GREEN}Cloud SQL Instance created.${NC}"
 else
     echo -e "${GREEN}Cloud SQL Instance already exists.${NC}"
-    echo -e "${YELLOW}Enter password for DB root user (for deployment env var):${NC}"
-    read -s DB_PASSWORD
+    # Optionally reset root password here if needed: gcloud sql users set-password root --host=% --instance=$SQL_INSTANCE_NAME --password=$DB_PASSWORD
 fi
 
 # Grant Cloud SQL Client role to default service account
@@ -85,6 +91,22 @@ else
      echo -e "${GREEN}Database already exists.${NC}"
 fi
 
+# 3.5 GCS Bucket Setup
+echo -e "${YELLOW}Checking/Creating GCS Bucket for Uploads...${NC}"
+if ! gcloud storage buckets describe gs://$GCS_BUCKET_NAME &> /dev/null; then
+    gcloud storage buckets create gs://$GCS_BUCKET_NAME --location=$REGION --uniform-bucket-level-access
+    gcloud storage buckets update gs://$GCS_BUCKET_NAME --web-main-page-suffix=index.html
+    echo -e "${GREEN}GCS Bucket $GCS_BUCKET_NAME created.${NC}"
+else
+    echo -e "${GREEN}GCS Bucket $GCS_BUCKET_NAME already exists.${NC}"
+fi
+
+# Make bucket public
+echo -e "${YELLOW}Making GCS Bucket public...${NC}"
+gcloud storage buckets add-iam-policy-binding gs://$GCS_BUCKET_NAME \
+    --member=allUsers \
+    --role=roles/storage.objectViewer
+
 # 4. Deploy Backend
 echo -e "${YELLOW}Building and Deploying Backend API...${NC}"
 gcloud builds submit ./be-api \
@@ -96,7 +118,7 @@ gcloud run deploy be-api \
     --platform managed \
     --region $REGION \
     --allow-unauthenticated \
-    --set-env-vars "DSN=$DB_USER:$DB_PASSWORD@unix(/cloudsql/$PROJECT_ID:$REGION:$SQL_INSTANCE_NAME)/$DB_NAME?charset=utf8mb4&parseTime=True&loc=UTC" \
+    --set-env-vars "DSN=$DB_USER:$DB_PASSWORD@unix(/cloudsql/$PROJECT_ID:$REGION:$SQL_INSTANCE_NAME)/$DB_NAME?charset=utf8mb4&parseTime=True&loc=UTC,GCS_BUCKET_NAME=$GCS_BUCKET_NAME" \
     --add-cloudsql-instances $PROJECT_ID:$REGION:$SQL_INSTANCE_NAME
 
 # Get Backend URL
