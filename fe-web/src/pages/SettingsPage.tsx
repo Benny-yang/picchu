@@ -391,7 +391,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser, setCurrentUser
                             <div className="text-gray-700 leading-relaxed text-[15px]">
                                 <p>若有任何問題或建議，歡迎透過電子信箱與我們聯繫：</p>
                                 <p className="mt-2 font-medium text-[#009bcd]">
-                                    <a href="mailto:phongi.living@gmail.com" className="hover:underline">phongi.living@gmail.com</a>
+                                    <a href="mailto:picchu.tw@protonmail.com" className="hover:underline">picchu.tw@protonmail.com</a>
                                 </p>
                             </div>
                         </div>
