@@ -7,9 +7,10 @@ interface MobileMenuProps {
     isOpen: boolean;
     onClose: () => void;
     activePage: string;
+    currentUser?: any;
 }
 
-const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, activePage }) => {
+const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, activePage, currentUser }) => {
     const navigate = useNavigate();
 
     if (!isOpen) return null;
@@ -18,7 +19,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, activePage }) 
         { id: 'works-wall', label: '作品牆', icon: Grid, path: '/' },
         { id: 'activities', label: '揪團活動', icon: Activity, path: '/activities' },
         { id: 'create-activity', label: '我要開團', icon: PlusCircle, path: '/activities/create' },
-        { id: 'profile', label: '我的主頁', icon: User, path: '/profile' },
+        { id: 'profile', label: '我的主頁', icon: User, path: currentUser?.id ? `/profile/${currentUser.id}` : '/profile' },
         { id: 'settings', label: '設定', icon: Settings, path: '/settings' },
     ];
 

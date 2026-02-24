@@ -6,9 +6,10 @@ import { authService } from '../../services/authService';
 interface ProfileDropdownProps {
     isOpen: boolean;
     onClose: () => void;
+    currentUser?: any;
 }
 
-const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ isOpen, onClose }) => {
+const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ isOpen, onClose, currentUser }) => {
     const navigate = useNavigate();
     if (!isOpen) return null;
 
@@ -26,7 +27,14 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ isOpen, onClose }) =>
             <div className="absolute top-16 right-0 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                 <div className="py-1">
                     <button
-                        onClick={() => { navigate('/profile'); onClose(); }}
+                        onClick={() => {
+                            if (currentUser?.id) {
+                                navigate(`/profile/${currentUser.id}`);
+                            } else {
+                                navigate('/profile');
+                            }
+                            onClose();
+                        }}
                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                     >
                         <User size={16} />

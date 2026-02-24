@@ -190,6 +190,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({ activePage, currentUser }) => {
                                 <ProfileDropdown
                                     isOpen={showProfileDropdown}
                                     onClose={() => setShowProfileDropdown(false)}
+                                    currentUser={currentUser}
                                 />
                             </div>
                         </>
@@ -247,6 +248,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({ activePage, currentUser }) => {
                 isOpen={isMobileMenuOpen}
                 onClose={() => setIsMobileMenuOpen(false)}
                 activePage={activePage || ''}
+                currentUser={currentUser}
             />
 
             {/* Application Management Modal */}
