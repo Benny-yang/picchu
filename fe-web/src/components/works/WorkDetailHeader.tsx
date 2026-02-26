@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 import UserInfo from '../user/UserInfo';
+import { tokenManager } from '../../services/tokenManager';
 
 interface WorkDetailHeaderProps {
     authorId?: number; // Added authorId
@@ -30,6 +31,7 @@ const WorkDetailHeader: React.FC<WorkDetailHeaderProps> = ({
     allowEdit = false
 }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const isGuest = !tokenManager.getUser();
 
     return (
         <div className="h-[72px] px-6 flex items-center justify-between border-b border-[#E6E6E6] flex-shrink-0 relative">
@@ -43,7 +45,7 @@ const WorkDetailHeader: React.FC<WorkDetailHeaderProps> = ({
                     size="md"
                     className="flex-1"
                 />
-                {showFollowButton && (
+                {!isGuest && showFollowButton && (
                     <button
                         onClick={onFollowToggle}
                         className={`text-[12px] px-3 py-0.5 rounded-full transition-colors flex-shrink-0 ${isFollowing

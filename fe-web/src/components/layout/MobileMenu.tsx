@@ -15,12 +15,16 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, activePage, cu
 
     if (!isOpen) return null;
 
+    const isLoggedIn = !!(currentUser && (currentUser.id || currentUser.ID || currentUser.username));
+
     const navItems = [
         { id: 'works-wall', label: '作品牆', icon: Grid, path: '/' },
         { id: 'activities', label: '揪團活動', icon: Activity, path: '/activities' },
-        { id: 'create-activity', label: '我要開團', icon: PlusCircle, path: '/activities/create' },
-        { id: 'profile', label: '我的主頁', icon: User, path: currentUser?.id ? `/profile/${currentUser.id}` : '/profile' },
-        { id: 'settings', label: '設定', icon: Settings, path: '/settings' },
+        ...(isLoggedIn ? [
+            { id: 'create-activity', label: '我要開團', icon: PlusCircle, path: '/activities/create' },
+            { id: 'profile', label: '我的主頁', icon: User, path: (currentUser?.id || currentUser?.ID) ? `/profile/${currentUser.id || currentUser.ID}` : '/profile' },
+            { id: 'settings', label: '設定', icon: Settings, path: '/settings' }
+        ] : []),
     ];
 
     const handleLogout = () => {
@@ -70,15 +74,28 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, activePage, cu
                     </div>
                 </div>
 
-                {/* Footer / Logout */}
+                {/* Footer / Auth Actions */}
                 <div className="p-4 border-t border-gray-100">
-                    <button
-                        className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                        onClick={handleLogout}
-                    >
-                        <LogOut size={20} />
-                        <span className="font-medium">登出</span>
-                    </button>
+                    {isLoggedIn ? (
+                        <button
+                            className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                            onClick={handleLogout}
+                        >
+                            <LogOut size={20} />
+                            <span className="font-medium">登出</span>
+                        </button>
+                    ) : (
+                        <button
+                            className="w-full flex items-center justify-center gap-3 px-4 py-3 text-white bg-gradient-to-r from-[#F2994A] to-[#009bcd] hover:opacity-90 rounded-xl transition-opacity font-bold"
+                            onClick={() => {
+                                navigate('/login');
+                                onClose();
+                            }}
+                        >
+                            <User size={20} />
+                            <span>登入 / 註冊</span>
+                        </button>
+                    )}
                     <div className="mt-4 text-center text-xs text-gray-400">
                         VibeCoding App v1.0.0
                     </div>
