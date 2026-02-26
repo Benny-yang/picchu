@@ -40,6 +40,14 @@ function LoginPage({ onLoginSuccess }: { onLoginSuccess: (user: User) => void })
   const navigate = useNavigate();
   const params = new URLSearchParams(window.location.search);
   const tab = params.get('tab') || 'selection';
+
+  // Store first_login parameter if present in URL
+  useEffect(() => {
+    if (params.get('first_login') === 'true') {
+      sessionStorage.setItem('first_login', 'true');
+    }
+  }, [params]);
+
   const [view, setView] = useState<'selection' | 'login' | 'register'>(
     tab === 'login' ? 'login' : tab === 'register' ? 'register' : 'selection'
   );
