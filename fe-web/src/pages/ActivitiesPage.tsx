@@ -69,7 +69,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ currentUser }) => {
         <div className="w-full min-h-screen bg-gray-50 flex flex-col">
             <MainHeader activePage="activities" currentUser={currentUser} />
 
-            <div className="max-w-[1200px] mx-auto w-full px-4 pt-8">
+            <div className="max-w-[1200px] mx-auto w-full px-4 pt-8 md:pb-0 pb-[80px]">
                 {/* Categories Tabs */}
                 <div className="flex justify-center border-b border-gray-200 mb-8">
                     {categories.map((cat) => (

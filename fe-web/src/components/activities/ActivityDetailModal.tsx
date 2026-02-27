@@ -197,27 +197,34 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
     })();
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={onClose}>
-            {/* Close Button (Outer) */}
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm md:p-4 animate-in fade-in duration-200" onClick={onClose}>
+            {/* Close Button (Outer - Desktop mainly) */}
             <button
                 onClick={onClose}
-                className="absolute top-6 right-6 text-white hover:text-gray-300 transition-colors"
+                className="hidden md:block absolute top-6 right-6 text-white hover:text-gray-300 transition-colors z-[80]"
             >
                 <X size={32} />
             </button>
 
             <div
-                className="bg-white rounded-xl w-full max-w-5xl h-[85vh] max-h-[800px] overflow-hidden flex flex-col md:flex-row shadow-2xl relative"
+                className="bg-white w-full h-[100dvh] md:rounded-xl md:max-w-5xl md:h-[85vh] md:max-h-[800px] overflow-hidden flex flex-col md:flex-row shadow-2xl relative"
                 onClick={(e) => e.stopPropagation()}
             >
 
                 {/* Left: Images */}
-                <div className="w-full md:w-1/2 bg-black flex flex-col relative group">
+                <div className="w-full md:w-1/2 h-[45vh] md:h-full flex-shrink-0 bg-black flex flex-col relative group">
                     <ActivityImageGallery images={images} isLoading={isLoading} />
+                    {/* Mobile Close Button - Overlaid on image */}
+                    <button
+                        onClick={onClose}
+                        className="md:hidden absolute top-4 right-4 text-white bg-black/40 hover:bg-black/60 p-2 rounded-full transition-colors z-[80]"
+                    >
+                        <X size={20} className="drop-shadow-sm" />
+                    </button>
                 </div>
 
                 {/* Right: Info */}
-                <div className="w-full md:w-1/2 p-8 overflow-y-auto flex flex-col relative">
+                <div className="w-full md:w-1/2 flex-1 p-5 md:p-8 overflow-y-auto flex flex-col relative pb-[100px] md:pb-8">
 
                     {/* Activity Not Found Banner */}
                     {isActivityNotFound && (

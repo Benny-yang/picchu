@@ -309,7 +309,7 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
         <div className="w-full min-h-screen bg-[#F7F7F7] flex flex-col">
             <MainHeader activePage="create-activity" currentUser={currentUser} />
 
-            <div className="max-w-[800px] mx-auto w-full px-4 py-8">
+            <div className="max-w-[800px] mx-auto w-full px-4 pt-8 md:pb-8 pb-[80px]">
                 <div className="bg-white rounded-xl shadow-sm p-8">
                     <h1 className="text-[32px] font-bold text-[#666666] mb-8 text-center font-['Noto_Sans'] leading-[1.25]">{isEditMode ? '編輯活動' : '我要開團'}</h1>
 

@@ -83,19 +83,18 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGenericClick, onSubmit, onClose
                     onClick={onClose}
                 />
 
-                {/* Modal Card - Exact Dimensions from Figma 1722-5284 */}
-                {/* Modal Card - Exact Dimensions from Figma 1722-5284 - Use min-h to prevent overflow */}
-                <div className="relative w-[617px] min-h-[521px] bg-white rounded-[16px] flex flex-col items-center shadow-2xl animate-fade-in-up pb-8 transition-all duration-300">
+                {/* Modal Card - Responsive Flex Layout */}
+                <div className="relative w-[90%] max-w-[616px] bg-white rounded-[24px] md:rounded-[32px] flex flex-col items-center justify-center p-8 md:p-12 shadow-2xl animate-fade-in-up transition-all duration-300">
 
                     {/* Success Message Alert */}
                     {successMessage && (
-                        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded-full z-10 text-sm font-medium animate-fade-in-down">
+                        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded-full z-10 text-sm font-medium animate-fade-in-down w-max">
                             {successMessage}
                         </div>
                     )}
 
                     {/* Header: Back Button */}
-                    <div className="absolute top-8 left-8">
+                    <div className="self-start md:absolute md:top-8 md:left-8 w-full md:w-auto flex justify-start mb-4 md:mb-0 -mt-2 md:mt-0">
                         <button
                             onClick={onGenericClick}
                             className="flex items-center text-gray-500 hover:text-[#191919] transition-colors gap-1"
@@ -105,9 +104,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGenericClick, onSubmit, onClose
                         </button>
                     </div>
 
-                    {/* Logo Section - Top Center */}
-                    {/* Position: Top 112px, Logo 64x77 */}
-                    <div className="flex flex-col items-center mt-[50px] mb-[40px]">
+                    {/* Logo Section */}
+                    <div className="flex flex-col items-center mb-8 md:mb-[40px] md:mt-[20px]">
                         <div className="w-[64px] h-[77px] flex items-center justify-center mb-4">
                             {/* Authentic Discrete Logo (Same as Register Page) */}
                             <svg width="100%" height="100%" viewBox="0 0 64 77" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
@@ -124,8 +122,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGenericClick, onSubmit, onClose
                     </div>
 
                     {/* Form Section */}
-                    {/* Width: 280px (approx based on layout) */}
-                    <div className="w-[280px] flex flex-col gap-5">
+                    <div className="w-full max-w-[280px] md:max-w-[320px] flex flex-col gap-5">
                         {/* Email Input */}
                         <div className="flex flex-col gap-2">
                             <label className="text-base font-bold text-[#191919] ml-1">信箱</label>
@@ -197,10 +194,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onGenericClick, onSubmit, onClose
                     )}
 
                     {/* Submit Button */}
-                    <div className="mt-4 w-[280px] flex justify-center">
+                    <div className="mt-4 w-full flex justify-center">
                         <button
                             onClick={handleSubmit}
-                            className="w-[140px] h-[50px] rounded-full bg-gradient-to-r from-[#F2994A] to-[#009bcd] text-white font-bold text-lg hover:opacity-90 transition-opacity shadow-lg shadow-orange-500/20"
+                            className="w-full max-w-[140px] h-[50px] rounded-full bg-gradient-to-r from-[#F2994A] to-[#009bcd] text-white font-bold text-lg hover:opacity-90 transition-opacity shadow-lg shadow-orange-500/20"
                         >
                             登入
                         </button>

@@ -7,7 +7,7 @@ import UploadWorkModal from '../components/works/UploadWorkModal';
 import ReviewHistoryModal from '../components/user/ReviewHistoryModal';
 import InviteActivityModal from '../components/activities/InviteActivityModal';
 import FollowListModal from '../components/user/FollowListModal';
-import { Image, Calendar, Plus, User } from 'lucide-react';
+import { Image, Calendar, Plus, User, Settings } from 'lucide-react';
 import ActivityCard from '../components/activities/ActivityCard';
 import WorkCard from '../components/works/WorkCard';
 import { authService } from '../services/authService';
@@ -170,7 +170,7 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ currentUser: propUser
         <div className="w-full min-h-screen bg-white flex flex-col">
             <MainHeader activePage="profile" currentUser={currentUser} />
 
-            <div className="max-w-[935px] mx-auto w-full px-4 pt-8 md:pt-14">
+            <div className="max-w-[935px] mx-auto w-full px-4 pt-8 md:pt-14 md:pb-0 pb-[80px]">
                 {/* Profile Header */}
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-16 mb-12">
                     {/* Avatar */}
@@ -198,12 +198,18 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ currentUser: propUser
                                         </button>
                                         <button
                                             onClick={() => navigate('/settings?tab=profile')}
-                                            className="px-5 py-2 border border-[#dbdbdb] rounded-full text-sm font-bold text-[#262626] hover:bg-gray-50 transition-colors flex items-center gap-2"
+                                            className="hidden md:flex flex-row px-5 py-2 border border-[#dbdbdb] rounded-full text-sm font-bold text-[#262626] hover:bg-gray-50 transition-colors items-center gap-2"
                                         >
                                             編輯個人檔案
                                         </button>
+                                        <button
+                                            onClick={() => navigate('/settings')}
+                                            className="md:hidden p-2 text-gray-500 hover:text-gray-900 transition-colors"
+                                        >
+                                            <Settings size={24} />
+                                        </button>
                                     </>
-                                ) : (
+                                ) : currentUser ? (
                                     <>
                                         <button
                                             onClick={handleFollow}
@@ -222,7 +228,7 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ currentUser: propUser
                                         </button>
 
                                     </>
-                                )}
+                                ) : null}
                             </div>
                         </div>
 

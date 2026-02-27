@@ -56,8 +56,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onGenericClick, onSubmit, o
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center font-sans">
                 <div className="absolute inset-0 bg-[#0a0a0a]/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
-                <div className="relative w-full max-w-[600px] bg-white rounded-[32px] flex flex-col items-center shadow-2xl p-12 mx-4 animate-fade-in-up min-h-[400px] justify-center text-center">
-                    <h2 className="text-2xl font-bold text-[#191919] mb-4">註冊成功！</h2>
+                <div className="relative w-[90%] max-w-[600px] bg-white rounded-[24px] md:rounded-[32px] flex flex-col items-center shadow-2xl p-8 md:p-12 animate-fade-in-up justify-center text-center">
+                    <h2 className="text-xl md:text-2xl font-bold text-[#191919] mb-4">註冊成功！</h2>
                     <p className="text-gray-600 mb-8">驗證信已發送至 {formData.email}<br />請前往信箱點擊連結以啟用帳號。</p>
                     <div className="flex flex-col gap-3 items-center">
                         <button
@@ -88,10 +88,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onGenericClick, onSubmit, o
             />
 
             {/* Modal Card */}
-            <div className="relative w-full max-w-[600px] bg-white rounded-[32px] flex flex-col items-center shadow-2xl p-12 mx-4 animate-fade-in-up min-h-[600px]">
+            <div className="relative w-[90%] max-w-[600px] bg-white rounded-[24px] md:rounded-[32px] flex flex-col items-center justify-center shadow-2xl p-8 md:p-12 animate-fade-in-up">
 
                 {/* Header: Back Button */}
-                <div className="absolute top-8 left-8">
+                <div className="self-start md:absolute md:top-8 md:left-8 w-full md:w-auto flex justify-start mb-4 md:mb-0 -mt-2 md:mt-0">
                     <button
                         onClick={onGenericClick}
                         className="flex items-center text-gray-500 hover:text-[#191919] transition-colors gap-1"
@@ -102,7 +102,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onGenericClick, onSubmit, o
                 </div>
 
                 {/* Logo Section */}
-                <div className="flex flex-col items-center mt-6 mb-8">
+                <div className="flex flex-col items-center mb-8">
                     {/* Authentic Figma Logo for Register Page */}
                     <div className="w-[64px] h-[77px] flex items-center justify-center mb-4">
                         <svg width="100%" height="100%" viewBox="0 0 64 77" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
@@ -119,7 +119,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onGenericClick, onSubmit, o
                 </div>
 
                 {/* Form Section */}
-                <div className="w-full max-w-[320px] flex flex-col gap-5">
+                <div className="w-full max-w-[280px] md:max-w-[320px] flex flex-col gap-5">
                     {/* Error Message */}
                     {errorMessage && (
                         <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-2 rounded-lg text-sm">

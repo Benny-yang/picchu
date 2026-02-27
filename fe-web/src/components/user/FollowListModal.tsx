@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { followService } from '../../services/followService';
 import { IMG_BASE_URL } from '../../config';
 import UserInfo from './UserInfo';
+import { parseRoles, formatRoles } from '../../utils/roleUtils';
 
 interface FollowListModalProps {
     isOpen: boolean;
@@ -94,22 +95,8 @@ const FollowListModal: React.FC<FollowListModalProps> = ({ isOpen, onClose, user
                     ) : users.length > 0 ? (
                         <div className="space-y-4">
                             {users.map((user) => {
-                                let roles: string[] = [];
-                                try {
-                                    if (user.profile?.roles) {
-                                        if (Array.isArray(user.profile.roles)) roles = user.profile.roles;
-                                        else if (typeof user.profile.roles === 'string' && user.profile.roles.startsWith('[')) {
-                                            roles = JSON.parse(user.profile.roles);
-                                        } else if (user.profile.roles) {
-                                            roles = [user.profile.roles];
-                                        }
-                                    }
-                                } catch (e) { }
-                                if (roles.length === 0) {
-                                    if (user.profile?.isPhotographer) roles.push('攝影師');
-                                    if (user.profile?.isModel) roles.push('模特兒');
-                                }
-                                const displayRole = roles.length > 0 ? roles.join(' / ') : '一般會員';
+                                const roles = parseRoles(user.profile);
+                                const displayRole = roles.length > 0 ? formatRoles(roles) : '一般會員';
 
                                 return (
                                     <div key={user.id} className="flex items-center justify-between">
@@ -126,6 +113,7 @@ const FollowListModal: React.FC<FollowListModalProps> = ({ isOpen, onClose, user
                                             role={displayRole}
                                             size="sm"
                                             className="flex-1"
+                                            onClick={onClose}
                                         />
                                         {/* Follow button could go here */}
                                     </div>

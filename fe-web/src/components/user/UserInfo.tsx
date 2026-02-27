@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Star, User } from 'lucide-react';
 import ReviewHistoryModal from './ReviewHistoryModal';
+import { getRoleLabel } from '../../utils/roleUtils';
 
 interface UserInfoProps {
     avatar: string;
@@ -57,15 +58,15 @@ const UserInfo: React.FC<UserInfoProps> = ({
 
     const currentSize = sizeClasses[size];
 
-    // Helper to format role
-    const displayRole = Array.isArray(role) ? role.join(' / ') : role;
+    // Helper to format role with translation
+    const displayRole = Array.isArray(role) ? role.map(getRoleLabel).join(' / ') : getRoleLabel(role);
 
     const handleClick = () => {
-        if (onClick) {
-            onClick();
-        } else if (userId) {
+        onClick?.();
+
+        if (userId) {
             navigate(`/profile/${userId}`);
-        } else {
+        } else if (!onClick) {
             console.warn("UserInfo: userId missing, cannot navigate to profile");
         }
     };

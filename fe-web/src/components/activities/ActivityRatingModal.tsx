@@ -172,23 +172,23 @@ const ActivityRatingModal: React.FC<ActivityRatingModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={onClose}>
-            <div className="bg-white rounded-[16px] w-full max-w-[900px] h-[600px] flex overflow-hidden shadow-2xl relative" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white rounded-[16px] w-full max-w-[900px] h-[85vh] md:h-[600px] min-h-[500px] flex flex-col md:flex-row overflow-hidden shadow-2xl relative" onClick={(e) => e.stopPropagation()}>
 
                 {/* Close Button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10 bg-white/50 backdrop-blur-sm rounded-full p-1"
                 >
                     <X size={24} />
                 </button>
 
                 {/* Left Column: Participants */}
-                <div className="w-[400px] flex flex-col border-r border-[#e6e6e6]">
-                    <div className="p-4 flex items-center justify-center border-b border-[#e6e6e6]">
-                        <h3 className="text-[18px] font-bold text-[#191919]">參加人員</h3>
+                <div className="w-full md:w-[320px] lg:w-[400px] h-[40%] md:h-full flex flex-col border-b md:border-b-0 md:border-r border-[#e6e6e6] shrink-0">
+                    <div className="p-3 md:p-4 flex items-center justify-center border-b border-[#e6e6e6] shrink-0">
+                        <h3 className="text-[16px] md:text-[18px] font-bold text-[#191919]">參加人員</h3>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                    <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-4 md:space-y-6">
                         {isLoading ? (
                             <div className="flex justify-center p-4">Loading...</div>
                         ) : participants.length === 0 ? (
@@ -240,19 +240,19 @@ const ActivityRatingModal: React.FC<ActivityRatingModalProps> = ({
                 </div>
 
                 {/* Right Column: Rating Form */}
-                <div className="flex-1 flex flex-col items-center bg-gray-50/50">
-                    <div className="w-full p-4 flex items-center justify-center border-b border-[#e6e6e6] bg-white">
-                        <h3 className="text-[18px] font-bold text-[#191919]">
+                <div className="w-full md:flex-1 h-[60%] md:h-full flex flex-col items-center bg-gray-50/50 overflow-y-auto relative">
+                    <div className="w-full p-3 md:p-4 flex items-center justify-center border-b border-[#e6e6e6] bg-white shrink-0">
+                        <h3 className="text-[16px] md:text-[18px] font-bold text-[#191919]">
                             {selectedParticipant ? (isReadOnly ? `您對 ${selectedParticipant.name} 的評價` : `評價 ${selectedParticipant.name}`) : '評價'}
                         </h3>
                     </div>
 
                     {!selectedId ? (
-                        <div className="flex-1 flex items-center justify-center text-gray-400">
+                        <div className="flex-1 flex items-center justify-center text-gray-400 p-4 text-center">
                             請選擇一位參加者進行評價
                         </div>
                     ) : (
-                        <div className="flex-1 w-full p-8 flex flex-col items-center justify-center space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="flex-1 w-full p-4 md:p-8 flex flex-col items-center justify-center space-y-4 md:space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div className="text-center">
                                 <h4 className="text-[16px] font-bold text-[#191919] mb-4">
                                     {isReadOnly ? '已送出的滿意度' : '活動表現滿意度'}
@@ -284,7 +284,7 @@ const ActivityRatingModal: React.FC<ActivityRatingModalProps> = ({
                                     placeholder={isReadOnly ? '無留言' : `分享您對 ${selectedParticipant?.name} 的感想...`}
                                     maxLength={100}
                                     disabled={!!isReadOnly}
-                                    className={`w-full h-40 p-4 bg-white border border-gray-200 rounded-lg resize-none focus:outline-none text-sm transition-all ${!isReadOnly ? 'focus:ring-2 focus:ring-[#FFAF3C]/20 focus:border-[#FFAF3C]' : 'bg-gray-50 text-gray-500'}`}
+                                    className={`w-full h-24 md:h-40 p-3 md:p-4 bg-white border border-gray-200 rounded-lg resize-none focus:outline-none text-sm transition-all ${!isReadOnly ? 'focus:ring-2 focus:ring-[#FFAF3C]/20 focus:border-[#FFAF3C]' : 'bg-gray-50 text-gray-500'}`}
                                 />
                                 {!isReadOnly && (
                                     <span className="absolute bottom-3 right-3 text-xs text-gray-400">
@@ -297,7 +297,7 @@ const ActivityRatingModal: React.FC<ActivityRatingModalProps> = ({
                                 <button
                                     onClick={handleSubmit}
                                     disabled={isSubmitting || rating === 0}
-                                    className={`px-16 py-3 rounded-full text-white font-bold text-lg shadow-md transition-all transform active:scale-95 ${isSubmitting || rating === 0
+                                    className={`w-full max-w-[200px] md:max-w-none md:w-auto md:px-16 py-2 md:py-3 rounded-full text-white font-bold text-base md:text-lg shadow-md transition-all transform active:scale-95 ${isSubmitting || rating === 0
                                         ? 'bg-gray-300 cursor-not-allowed transform-none'
                                         : 'hover:shadow-lg hover:opacity-95'
                                         }`}
@@ -308,7 +308,7 @@ const ActivityRatingModal: React.FC<ActivityRatingModalProps> = ({
                                     {isSubmitting ? '送出中...' : '送出'}
                                 </button>
                             ) : (
-                                <div className="text-gray-400 text-sm italic">
+                                <div className="text-gray-400 text-xs md:text-sm italic pb-2 md:pb-0">
                                     評價已送出，無法修改
                                 </div>
                             )}

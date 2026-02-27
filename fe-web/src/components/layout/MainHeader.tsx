@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notificationService } from '../../services/notificationService';
-import { Heart, Menu, User, PlusCircle } from 'lucide-react';
+import { Heart, User, PlusCircle } from 'lucide-react';
 import NotificationDropdown from './NotificationDropdown';
 import ApplicationManagementModal from '../activities/ApplicationManagementModal';
-import MobileMenu from './MobileMenu';
 import ProfileDropdown from './ProfileDropdown';
 import { IMG_BASE_URL } from '../../config';
 
@@ -18,7 +17,6 @@ const MainHeader: React.FC<MainHeaderProps> = ({ activePage, currentUser }) => {
     const navigate = useNavigate();
     const [showNotifications, setShowNotifications] = useState(false);
     const [reviewActivityId, setReviewActivityId] = useState<number | null>(null);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
     const [avatarError, setAvatarError] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -90,47 +88,51 @@ const MainHeader: React.FC<MainHeaderProps> = ({ activePage, currentUser }) => {
                     </svg>
                 </div>
 
-                {/* Right Section: Menu Items (Desktop) */}
-                <div className="hidden md:flex items-center gap-6">
-                    {/* Gallery (Works Wall) */}
-                    <button
-                        className="hover:opacity-70 transition-opacity"
-                        onClick={() => navigate('/')}
-                    >
-                        <img
-                            src={activePage === 'works-wall' ? "/assets/gallery_icon.png" : "/assets/gallery_gray_icon.png"}
-                            alt="Gallery"
-                            className="w-6 h-6 object-contain"
-                        />
-                    </button>
-
-                    {/* Wave (Activities) */}
-                    <button
-                        className="hover:opacity-70 transition-opacity"
-                        onClick={() => navigate('/activities')}
-                    >
-                        <img
-                            src={activePage === 'activities' ? "/assets/gradient_wave_icon.png" : "/assets/wave_icon.png"}
-                            alt="Activity"
-                            className="w-6 h-6 object-contain"
-                        />
-                    </button>
-
-                    {/* Creation (Plus Circle) */}
-                    <button
-                        className="hover:opacity-70 transition-opacity"
-                        onClick={handleCreateClick}
-                    >
-                        {activePage === 'create-activity' ? (
+                {/* Right Section */}
+                <div className="flex items-center gap-4 md:gap-6">
+                    {/* Desktop Navigation Group */}
+                    <div className="hidden md:flex items-center gap-6">
+                        {/* Gallery (Works Wall) */}
+                        <button
+                            className="hover:opacity-70 transition-opacity"
+                            onClick={() => navigate('/')}
+                        >
                             <img
-                                src="/assets/gradient_plus_icon.png"
-                                alt="Create"
+                                src={activePage === 'works-wall' ? "/assets/gallery_icon.png" : "/assets/gallery_gray_icon.png"}
+                                alt="Gallery"
                                 className="w-6 h-6 object-contain"
                             />
-                        ) : (
-                            <PlusCircle className="w-6 h-6 text-grey-1" />
-                        )}
-                    </button>
+                        </button>
+
+                        {/* Wave (Activities) */}
+                        <button
+                            className="hover:opacity-70 transition-opacity"
+                            onClick={() => navigate('/activities')}
+                        >
+                            <img
+                                src={activePage === 'activities' ? "/assets/gradient_wave_icon.png" : "/assets/wave_icon.png"}
+                                alt="Activity"
+                                className="w-6 h-6 object-contain"
+                            />
+                        </button>
+
+                        {/* Creation (Plus Circle) */}
+                        <button
+                            className="hover:opacity-70 transition-opacity"
+                            onClick={handleCreateClick}
+                        >
+                            {activePage === 'create-activity' ? (
+                                <img
+                                    src="/assets/gradient_plus_icon.png"
+                                    alt="Create"
+                                    className="w-6 h-6 object-contain"
+                                />
+                            ) : (
+                                <PlusCircle className="w-6 h-6 text-grey-1" />
+                            )}
+                        </button>
+
+                    </div>
 
                     {currentUser ? (
                         <>
@@ -164,8 +166,8 @@ const MainHeader: React.FC<MainHeaderProps> = ({ activePage, currentUser }) => {
                                 />
                             </div>
 
-                            {/* Avatar */}
-                            <div className="relative">
+                            {/* Avatar (Desktop Only) */}
+                            <div className="hidden md:block relative">
                                 <button
                                     className={`w-8 h-8 rounded-full overflow-hidden border cursor-pointer hover:opacity-80 transition-all ${activePage === 'profile' ? 'border-secondary-blue ring-2 ring-secondary-blue/20' : 'border-gray-200'}`}
                                     onClick={() => {
@@ -195,70 +197,28 @@ const MainHeader: React.FC<MainHeaderProps> = ({ activePage, currentUser }) => {
                             </div>
                         </>
                     ) : (
-                        /* Login/Register Button for Guests */
+                        /* Login/Register Button - Visible on both Mobile and Desktop */
                         <button
                             onClick={() => navigate('/login')}
-                            className="px-6 py-2 rounded-full bg-gradient-to-r from-[#F2994A] to-[#009bcd] text-white font-bold text-sm hover:opacity-90 transition-opacity"
+                            className="px-4 md:px-6 py-1.5 md:py-2 rounded-full bg-gradient-to-r from-[#F2994A] to-[#009bcd] text-white font-bold text-xs md:text-sm whitespace-nowrap hover:opacity-90 transition-opacity"
                         >
                             登入 / 註冊
                         </button>
                     )}
                 </div>
 
-                {/* Mobile Menu Button */}
-                <div className="flex md:hidden items-center gap-4">
-                    <div className="relative" ref={notificationRef}>
-                        <button
-                            className="hover:opacity-70 transition-opacity flex items-center justify-center"
-                            onClick={() => setShowNotifications(!showNotifications)}
-                        >
-                            {showNotifications ? (
-                                <img
-                                    src="/assets/gradient_heart_icon.png"
-                                    alt="Notifications"
-                                    className="w-6 h-6 object-contain"
-                                    width={24}
-                                    height={24}
-                                />
-                            ) : (
-                                <Heart className="w-6 h-6 text-grey-1" />
-                            )}
-                            {unreadCount > 0 && (
-                                <div className="absolute top-0 right-0 w-2 h-2 bg-alert-default rounded-full border border-white"></div>
-                            )}
-                        </button>
-                        <NotificationDropdown
-                            isOpen={showNotifications}
-                            onClose={() => setShowNotifications(false)}
-                            onNotificationClick={handleNotificationClick}
-                        />
-                    </div>
-
-                    <button
-                        onClick={() => setIsMobileMenuOpen(true)}
-                        className="text-[#666666] hover:text-black transition-colors"
-                    >
-                        <Menu className="w-7 h-7" />
-                    </button>
-                </div>
             </div>
 
-            {/* Mobile Menu Overlay */}
-            <MobileMenu
-                isOpen={isMobileMenuOpen}
-                onClose={() => setIsMobileMenuOpen(false)}
-                activePage={activePage || ''}
-                currentUser={currentUser}
-            />
-
             {/* Application Management Modal */}
-            {reviewActivityId && (
-                <ApplicationManagementModal
-                    isOpen={!!reviewActivityId}
-                    onClose={() => setReviewActivityId(null)}
-                    activityId={reviewActivityId}
-                />
-            )}
+            {
+                reviewActivityId && (
+                    <ApplicationManagementModal
+                        isOpen={!!reviewActivityId}
+                        onClose={() => setReviewActivityId(null)}
+                        activityId={reviewActivityId}
+                    />
+                )
+            }
         </div>
     );
 };

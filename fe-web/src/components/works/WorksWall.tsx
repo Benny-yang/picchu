@@ -61,7 +61,7 @@ const WorksWall: React.FC<WorksWallProps> = ({ currentUser }) => {
             <MainHeader activePage="works-wall" currentUser={currentUser} />
 
             {/* Main Content */}
-            <div className="w-full px-8 mt-8">
+            <div className="w-full px-8 mt-8 md:pb-0 pb-[80px]">
                 {/* Tabs */}
                 <div className="flex justify-center border-b border-gray-200 mb-8">
                     {/* Hot Tab */}

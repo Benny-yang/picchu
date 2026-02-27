@@ -22,6 +22,7 @@ import LoginPopup from './components/auth/LoginPopup';
 import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
 import BasicInfoForm from './components/user/BasicInfoForm';
+import BottomNavigation from './components/layout/BottomNavigation';
 
 // ────────────────────────────────────────────
 // Auth-gating wrapper: redirects to /login if not logged in
@@ -241,6 +242,7 @@ function App() {
             {/* Fallback */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
+          <BottomNavigation currentUser={currentUser} isLoggedIn={tokenManager.isLoggedIn()} />
         </BrowserRouter>
       </div>
     </UserContext.Provider>

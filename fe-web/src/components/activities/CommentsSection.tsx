@@ -3,6 +3,7 @@ import { Send } from 'lucide-react';
 import UserInfo from '../user/UserInfo';
 import { activityService } from '../../services/activityService';
 import { IMG_BASE_URL } from '../../config';
+import { parseRoles } from '../../utils/roleUtils';
 
 interface CommentsSectionProps {
     activityId: number;
@@ -116,17 +117,8 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ activityId }) => {
                         const profile = user?.profile;
                         const avatarUrl = getAvatarUrl(profile?.avatarUrl || '');
 
-                        // Parse roles
-                        let roles = profile?.roles;
-                        if (typeof roles === 'string' && roles.startsWith('[')) {
-                            try { roles = JSON.parse(roles); } catch { }
-                        }
-                        // Default if empty
-                        if (!roles || roles.length === 0) {
-                            roles = [];
-                            if (profile?.isPhotographer) roles.push('攝影師');
-                            if (profile?.isModel) roles.push('模特兒');
-                        }
+                        // Use utility to parse roles systematically from profile
+                        const roles = parseRoles(profile);
 
                         return (
                             <div key={item.id || index} className="flex gap-4">
