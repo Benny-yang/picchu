@@ -31,14 +31,14 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ currentUser, isLogg
     const navItems: NavItem[] = [
         {
             id: 'works-wall',
-            label: '首頁',
+            label: '',
             activeImage: '/assets/gallery_icon.png',
             inactiveImage: '/assets/gallery_gray_icon.png',
             path: '/'
         },
         {
             id: 'activities',
-            label: '探索',
+            label: '',
             activeImage: '/assets/gradient_wave_icon.png',
             inactiveImage: '/assets/wave_icon.png',
             path: '/activities'
@@ -46,14 +46,14 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ currentUser, isLogg
         ...(isLoggedIn ? [
             {
                 id: 'create-activity',
-                label: '發佈',
+                label: '',
                 activeImage: '/assets/gradient_plus_icon.png',
                 inactiveIcon: PlusCircle,
                 path: '/activities/create'
             },
             {
                 id: 'profile',
-                label: '個人',
+                label: '',
                 activeIcon: User,
                 inactiveIcon: User,
                 path: (currentUser?.id || currentUser?.ID) ? `/profile/${currentUser!.id || currentUser!.ID}` : '/profile'
