@@ -88,7 +88,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
         <>
             <div className="fixed inset-0 z-40" onClick={onClose} />
 
-            <div className="absolute top-16 right-20 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="absolute top-14 right-2 w-[320px] max-w-[calc(100vw-1rem)] sm:top-16 sm:right-20 sm:w-80 bg-white sm:rounded-xl rounded-lg shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                 <div className="p-4 border-b border-gray-50 flex justify-between items-center">
                     <h3 className="font-bold text-gray-900">通知</h3>
                     <button

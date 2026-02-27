@@ -23,6 +23,8 @@ import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
 import BasicInfoForm from './components/user/BasicInfoForm';
 import BottomNavigation from './components/layout/BottomNavigation';
+import MainHeader from './components/layout/MainHeader';
+import { useLocation } from 'react-router-dom';
 
 // ────────────────────────────────────────────
 // Auth-gating wrapper: redirects to /login if not logged in
@@ -32,6 +34,29 @@ function RequireAuth({ children }: { children: React.ReactElement }) {
     return <Navigate to="/login" replace />;
   }
   return children;
+}
+
+// ────────────────────────────────────────────
+// App Layout Wrapper
+// ────────────────────────────────────────────
+const HEADER_HIDDEN_PATHS = ['/login', '/register', '/reset-password', '/basic-info', '/edit-profile'];
+
+function AppLayout({ children, currentUser }: { children: React.ReactNode, currentUser: User | null }) {
+  const location = useLocation();
+  const isHidden = HEADER_HIDDEN_PATHS.includes(location.pathname);
+
+  let activePage: 'works-wall' | 'activities' | 'create-activity' | 'profile' | undefined;
+  if (location.pathname === '/') activePage = 'works-wall';
+  else if (location.pathname.startsWith('/activities/create')) activePage = 'create-activity';
+  else if (location.pathname.startsWith('/activities')) activePage = 'activities';
+  else if (location.pathname.startsWith('/profile') || location.pathname.startsWith('/settings') || location.pathname.startsWith('/applications')) activePage = 'profile';
+
+  return (
+    <>
+      {!isHidden && <MainHeader activePage={activePage} currentUser={currentUser} />}
+      {children}
+    </>
+  );
 }
 
 // ────────────────────────────────────────────
@@ -221,27 +246,29 @@ function App() {
 
   return (
     <UserContext.Provider value={{ currentUser, setCurrentUser }}>
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-gray-100 flex flex-col">
         <BrowserRouter>
-          <Routes>
-            {/* Auth */}
-            <Route path="/login" element={<LoginPage onLoginSuccess={setCurrentUser} />} />
-            <Route path="/basic-info" element={<RequireAuth><BasicInfoPage onUserUpdate={setCurrentUser} /></RequireAuth>} />
-            <Route path="/edit-profile" element={<RequireAuth><EditProfilePage onUserUpdate={setCurrentUser} /></RequireAuth>} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <AppLayout currentUser={currentUser}>
+            <Routes>
+              {/* Auth */}
+              <Route path="/login" element={<LoginPage onLoginSuccess={setCurrentUser} />} />
+              <Route path="/basic-info" element={<RequireAuth><BasicInfoPage onUserUpdate={setCurrentUser} /></RequireAuth>} />
+              <Route path="/edit-profile" element={<RequireAuth><EditProfilePage onUserUpdate={setCurrentUser} /></RequireAuth>} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-            {/* Main App */}
-            <Route path="/" element={<WorksWall currentUser={currentUser} />} />
-            <Route path="/activities" element={<ActivitiesPage currentUser={currentUser} />} />
-            <Route path="/activities/create" element={<RequireAuth><CreateActivityPage currentUser={currentUser} /></RequireAuth>} />
-            <Route path="/profile" element={<UserProfilePage currentUser={currentUser} />} />
-            <Route path="/profile/:uid" element={<UserProfilePage currentUser={currentUser} />} />
-            <Route path="/settings" element={<RequireAuth><SettingsPage currentUser={currentUser} setCurrentUser={setCurrentUser} /></RequireAuth>} />
-            <Route path="/applications" element={<RequireAuth><ActivityApplicationHistoryPage currentUser={currentUser} /></RequireAuth>} />
+              {/* Main App */}
+              <Route path="/" element={<WorksWall currentUser={currentUser} />} />
+              <Route path="/activities" element={<ActivitiesPage currentUser={currentUser} />} />
+              <Route path="/activities/create" element={<RequireAuth><CreateActivityPage /></RequireAuth>} />
+              <Route path="/profile" element={<UserProfilePage currentUser={currentUser} />} />
+              <Route path="/profile/:uid" element={<UserProfilePage currentUser={currentUser} />} />
+              <Route path="/settings" element={<RequireAuth><SettingsPage setCurrentUser={setCurrentUser} /></RequireAuth>} />
+              <Route path="/applications" element={<RequireAuth><ActivityApplicationHistoryPage currentUser={currentUser} /></RequireAuth>} />
 
-            {/* Fallback */}
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
+              {/* Fallback */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </AppLayout>
           <BottomNavigation currentUser={currentUser} isLoggedIn={tokenManager.isLoggedIn()} />
         </BrowserRouter>
       </div>

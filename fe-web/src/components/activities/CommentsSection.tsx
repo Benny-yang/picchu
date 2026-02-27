@@ -7,9 +7,10 @@ import { parseRoles } from '../../utils/roleUtils';
 
 interface CommentsSectionProps {
     activityId: number;
+    onClose?: () => void;
 }
 
-const CommentsSection: React.FC<CommentsSectionProps> = ({ activityId }) => {
+const CommentsSection: React.FC<CommentsSectionProps> = ({ activityId, onClose }) => {
     const [comment, setComment] = useState("");
     const [comments, setComments] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -132,6 +133,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ activityId }) => {
                                         rating={user?.averageRating || 0}
                                         size="sm"
                                         className="mb-1"
+                                        onClick={onClose}
                                     />
 
                                     <p className="text-sm text-[#191919] mb-1 leading-relaxed whitespace-pre-line">{item.content}</p>

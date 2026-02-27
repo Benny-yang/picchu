@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import MainHeader from '../components/layout/MainHeader';
 import { Clock, Calendar, MapPin, Loader2 } from 'lucide-react';
 import ActivityDetailModal from '../components/activities/ActivityDetailModal';
 import { authService } from '../services/authService';
@@ -84,8 +83,6 @@ const ActivityApplicationHistoryPage: React.FC<ActivityApplicationHistoryPagePro
 
     return (
         <div className="w-full min-h-screen bg-gray-50 flex flex-col">
-            <MainHeader activePage="profile" currentUser={currentUser} />
-
             <div className="max-w-[1000px] mx-auto w-full px-4 py-8">
                 <h1 className="text-2xl font-bold text-gray-900 mb-6">活動申請紀錄</h1>
 

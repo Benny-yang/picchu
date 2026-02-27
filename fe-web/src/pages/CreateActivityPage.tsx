@@ -1,14 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import MainHeader from '../components/layout/MainHeader';
 import { activityService } from '../services/activityService';
 import { IMG_BASE_URL } from '../config';
 
-interface CreateActivityPageProps {
-    currentUser?: any;
-}
-
-const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) => {
+const CreateActivityPage: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     // Basic form state - can be expanded later based on Figma details
@@ -132,14 +127,18 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
         });
     };
 
+    const handleAddTag = () => {
+        const tag = currentTag.trim();
+        if (tag && !formData.tags.includes(tag) && formData.tags.length < 5) {
+            setFormData(prev => ({ ...prev, tags: [...prev.tags, tag] }));
+            setCurrentTag('');
+        }
+    };
+
     const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && !isComposing) {
             e.preventDefault();
-            const tag = currentTag.trim();
-            if (tag && !formData.tags.includes(tag) && formData.tags.length < 5) {
-                setFormData(prev => ({ ...prev, tags: [...prev.tags, tag] }));
-                setCurrentTag('');
-            }
+            handleAddTag();
         }
     };
 
@@ -307,8 +306,6 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
 
     return (
         <div className="w-full min-h-screen bg-[#F7F7F7] flex flex-col">
-            <MainHeader activePage="create-activity" currentUser={currentUser} />
-
             <div className="max-w-[800px] mx-auto w-full px-4 pt-8 md:pb-8 pb-[80px]">
                 <div className="bg-white rounded-xl shadow-sm p-8">
                     <h1 className="text-[32px] font-bold text-[#666666] mb-8 text-center font-['Noto_Sans'] leading-[1.25]">{isEditMode ? '編輯活動' : '我要開團'}</h1>
@@ -495,11 +492,27 @@ const CreateActivityPage: React.FC<CreateActivityPageProps> = ({ currentUser }) 
                                     placeholder={
                                         formData.tags.length >= 5
                                             ? "已達標籤上限 (5)"
-                                            : (formData.tags.length === 0 ? "輸入風格標籤 (按 Enter 新增)" : "")
+                                            : (formData.tags.length === 0 ? "輸入風格標籤 (按確認或點擊新增)" : "")
                                     }
                                     disabled={formData.tags.length >= 5}
+                                    enterKeyHint="done"
                                     className="flex-1 bg-transparent border-none focus:ring-0 outline-none text-sm min-w-[120px] p-0 disabled:cursor-not-allowed"
                                 />
+                                {currentTag.trim() && formData.tags.length < 5 && (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            handleAddTag();
+                                        }}
+                                        className="ml-auto text-white bg-[#009bcd] hover:bg-[#007ea6] font-medium text-xs px-3 py-1.5 rounded-full transition-colors flex items-center shadow-sm"
+                                    >
+                                        <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        新增
+                                    </button>
+                                )}
                             </div>
                         </div>
 

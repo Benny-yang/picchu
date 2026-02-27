@@ -202,9 +202,9 @@ const ViewManager: React.FC<ViewManagerProps> = ({
             );
         case 'works-wall': return <div className="w-full h-full"><WorksWall currentUser={currentUser} /></div>;
         case 'activities': return <div className="w-full h-full"><ActivitiesPage currentUser={currentUser} /></div>;
-        case 'create-activity': return <div className="w-full h-full"><CreateActivityPage currentUser={currentUser} /></div>;
+        case 'create-activity': return <div className="w-full h-full"><CreateActivityPage /></div>;
         case 'profile': return <div className="w-full h-full"><UserProfilePage currentUser={currentUser} /></div>;
-        case 'settings': return <div className="w-full h-full"><SettingsPage currentUser={currentUser} setCurrentUser={setCurrentUser} /></div>;
+        case 'settings': return <div className="w-full h-full"><SettingsPage setCurrentUser={setCurrentUser} /></div>;
         case 'activity-application-history': return <div className="w-full h-full"><ActivityApplicationHistoryPage currentUser={currentUser} /></div>;
         case 'reset-password': return <div className="w-full h-full"><ResetPasswordPage /></div>;
         case '404':

@@ -321,7 +321,7 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
                     />
 
                     {/* Message Board */}
-                    {(status === 'joined' || status === 'isHost') && <CommentsSection activityId={Number(activityId)} />}
+                    {(status === 'joined' || status === 'isHost') && <CommentsSection activityId={Number(activityId)} onClose={onClose} />}
 
                 </div>
             </div>

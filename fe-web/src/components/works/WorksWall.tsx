@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { workService } from '../../services/workService';
 import WorkDetailModal from './WorkDetailModal';
-import MainHeader from '../layout/MainHeader';
 import WorkCard from './WorkCard';
 
 interface WorksWallProps {
@@ -57,9 +56,6 @@ const WorksWall: React.FC<WorksWallProps> = ({ currentUser }) => {
 
     return (
         <div className="w-full min-h-screen bg-gray-50 flex flex-col">
-            {/* Header */}
-            <MainHeader activePage="works-wall" currentUser={currentUser} />
-
             {/* Main Content */}
             <div className="w-full px-8 mt-8 md:pb-0 pb-[80px]">
                 {/* Tabs */}

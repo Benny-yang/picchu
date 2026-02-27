@@ -65,6 +65,9 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ currentUser, isLogg
         if (path === '/') {
             return location.pathname === '/';
         }
+        if (path === '/activities') {
+            return location.pathname === '/activities' || (location.pathname.startsWith('/activities/') && !location.pathname.startsWith('/activities/create'));
+        }
         return location.pathname.startsWith(path);
     };
 

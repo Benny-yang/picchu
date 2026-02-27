@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import MainHeader from '../components/layout/MainHeader';
 import { authService } from '../services/authService';
 import TermsContent from '../components/legal/TermsContent';
 import PrivacyContent from '../components/legal/PrivacyContent';
 import { IMG_BASE_URL } from '../config';
 
 interface SettingsPageProps {
-    currentUser?: any;
     setCurrentUser?: (user: any) => void;
 }
 
-const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser, setCurrentUser }) => {
+const SettingsPage: React.FC<SettingsPageProps> = ({ setCurrentUser }) => {
     const [activeTab, setActiveTab] = useState<'account' | 'profile' | 'terms' | 'privacy' | 'contact'>('account');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -139,8 +137,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser, setCurrentUser
 
     return (
         <div className="min-h-screen bg-[#F7F7F7]">
-            <MainHeader activePage="profile" currentUser={currentUser} />
-
             <div className="flex-1 max-w-5xl mx-auto w-full px-4 py-8 md:py-12 flex flex-col md:flex-row gap-8">
                 {/* Sidebar */}
                 <div className="w-full md:w-64 flex-shrink-0">

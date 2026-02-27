@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import MainHeader from '../components/layout/MainHeader';
 import WorkDetailModal from '../components/works/WorkDetailModal';
 import ActivityDetailModal from '../components/activities/ActivityDetailModal';
 import UploadWorkModal from '../components/works/UploadWorkModal';
@@ -138,7 +137,6 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ currentUser: propUser
     if (isLoading || !user) {
         return (
             <div className="w-full min-h-screen bg-white flex flex-col">
-                <MainHeader activePage="profile" />
                 <div className="flex-1 flex items-center justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#009bcd]" />
                 </div>
@@ -168,8 +166,6 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ currentUser: propUser
 
     return (
         <div className="w-full min-h-screen bg-white flex flex-col">
-            <MainHeader activePage="profile" currentUser={currentUser} />
-
             <div className="max-w-[935px] mx-auto w-full px-4 pt-8 md:pt-14 md:pb-0 pb-[80px]">
                 {/* Profile Header */}
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-16 mb-12">
