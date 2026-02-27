@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { PlusCircle, User, type LucideIcon } from 'lucide-react';
 
 interface BottomNavigationProps {
-    currentUser?: { id?: number; ID?: number };
+    currentUser?: { id?: number; ID?: number } | null;
     isLoggedIn: boolean;
 }
 
