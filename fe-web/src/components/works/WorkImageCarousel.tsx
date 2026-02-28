@@ -10,7 +10,7 @@ interface WorkImageCarouselProps {
 
 const WorkImageCarousel: React.FC<WorkImageCarouselProps> = ({ images, currentIndex, onPrev, onNext }) => {
     return (
-        <div className="w-full md:w-[60%] h-[40%] md:h-full bg-black relative flex items-center justify-center group">
+        <div className="w-full md:w-[60%] h-[50dvh] md:h-full flex-none bg-black relative flex items-center justify-center group">
             <img
                 src={images[currentIndex]}
                 alt={`Work Detail ${currentIndex + 1}`}

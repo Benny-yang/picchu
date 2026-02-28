@@ -168,7 +168,7 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({
 
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-8">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center md:p-8">
             {/* Overlay */}
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -178,13 +178,13 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({
             {/* Close Button (Outer Overlay) */}
             <button
                 onClick={onClose}
-                className="absolute top-6 right-6 z-[70] text-white hover:text-gray-300 transition-colors p-2"
+                className="absolute top-4 right-4 md:top-6 md:right-6 z-[70] text-white hover:text-gray-300 transition-colors p-2 md:bg-transparent bg-black/40 hover:bg-black/60 rounded-full md:rounded-none"
             >
-                <X size={32} />
+                <X size={24} className="md:w-8 md:h-8" />
             </button>
 
             {/* Modal Container */}
-            <div className="relative w-full max-w-[1200px] h-[80vh] md:h-[90vh] bg-white rounded-xl shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="relative w-full max-w-[1200px] h-[100dvh] md:h-[90vh] bg-white md:rounded-xl shadow-2xl flex flex-col md:flex-row overflow-y-auto md:overflow-hidden animate-in fade-in zoom-in duration-200">
 
                 {/* Left: Image Section (Carousel) */}
                 <WorkImageCarousel
@@ -195,7 +195,7 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({
                 />
 
                 {/* Right: Info Section */}
-                <div className="w-full md:w-[40%] h-[60%] md:h-full flex flex-col bg-white">
+                <div className="w-full md:w-[40%] h-auto md:h-full flex-none md:flex-1 overflow-visible md:overflow-y-auto flex flex-col bg-white">
                     <WorkDetailHeader
                         authorId={author.id} // Pass authorId
                         authorName={authorName}

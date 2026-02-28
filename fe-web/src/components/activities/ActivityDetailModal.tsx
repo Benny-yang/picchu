@@ -207,12 +207,12 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
             </button>
 
             <div
-                className="bg-white w-full h-[100dvh] md:rounded-xl md:max-w-5xl md:h-[85vh] md:max-h-[800px] overflow-hidden flex flex-col md:flex-row shadow-2xl relative"
+                className="bg-white w-full h-[100dvh] md:rounded-xl md:max-w-5xl md:h-[85vh] md:max-h-[800px] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row shadow-2xl relative"
                 onClick={(e) => e.stopPropagation()}
             >
 
                 {/* Left: Images */}
-                <div className="w-full md:w-1/2 h-[45vh] md:h-full flex-shrink-0 bg-black flex flex-col relative group">
+                <div className="w-full md:w-1/2 h-[50dvh] md:h-full flex-none bg-black flex flex-col relative group">
                     <ActivityImageGallery images={images} isLoading={isLoading} />
                     {/* Mobile Close Button - Overlaid on image */}
                     <button
@@ -224,7 +224,7 @@ const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activity, onC
                 </div>
 
                 {/* Right: Info */}
-                <div className="w-full md:w-1/2 flex-1 p-5 md:p-8 overflow-y-auto flex flex-col relative pb-[100px] md:pb-8">
+                <div className="w-full md:w-1/2 flex-none md:flex-1 h-auto md:h-full p-5 md:p-8 overflow-visible md:overflow-y-auto flex flex-col relative pb-[100px] md:pb-8">
 
                     {/* Activity Not Found Banner */}
                     {isActivityNotFound && (

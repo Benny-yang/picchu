@@ -46,9 +46,9 @@ const WorkCommentsSection: React.FC<WorkCommentsSectionProps> = ({
     };
 
     return (
-        <div className="flex flex-col flex-1 min-h-0 bg-white">
+        <div className="flex flex-col flex-none md:flex-1 min-h-0 bg-white">
             {/* Body: Comments (Scrollable) */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-5">
+            <div className="flex-none md:flex-1 overflow-visible md:overflow-y-auto p-4 space-y-5">
                 {comments.length === 0 ? (
                     <div className="text-center text-gray-400 py-10 text-sm">
                         尚無留言，成為第一個留言的人吧！

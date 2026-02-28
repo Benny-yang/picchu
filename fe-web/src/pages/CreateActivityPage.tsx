@@ -423,10 +423,10 @@ const CreateActivityPage: React.FC = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-3">
                                     需求角色
                                 </label>
-                                <div className="flex gap-6">
+                                <div className="flex flex-wrap gap-x-4 gap-y-2">
                                     {['photographer', 'model'].map((role) => (
                                         <label key={role} className="flex items-center gap-2 cursor-pointer group">
-                                            <div className="relative w-6 h-6">
+                                            <div className="relative w-6 h-6 flex-shrink-0">
                                                 <input
                                                     type="checkbox"
                                                     className="peer sr-only"
@@ -438,7 +438,7 @@ const CreateActivityPage: React.FC = () => {
                                                     <polyline points="20 6 9 17 4 12"></polyline>
                                                 </svg>
                                             </div>
-                                            <span className="text-sm text-[#191919] select-none">
+                                            <span className="text-sm text-[#191919] select-none whitespace-nowrap">
                                                 {role === 'photographer' ? '攝影師' : '模特兒'}
                                             </span>
                                         </label>

@@ -96,7 +96,7 @@ gcloud run deploy be-api-test \
     --platform managed \
     --region $REGION \
     --allow-unauthenticated \
-    --set-env-vars "DSN=$DB_USER:$DB_PASSWORD@unix(/cloudsql/$PROJECT_ID:$REGION:$SQL_INSTANCE_NAME)/$DB_NAME?charset=utf8mb4&parseTime=True&loc=UTC" \
+    --set-env-vars "DSN=$DB_USER:$DB_PASSWORD@unix(/cloudsql/$PROJECT_ID:$REGION:$SQL_INSTANCE_NAME)/$DB_NAME?charset=utf8mb4&parseTime=True&loc=UTC,GCS_BUCKET_NAME=$PROJECT_ID-uploads" \
     --add-cloudsql-instances $PROJECT_ID:$REGION:$SQL_INSTANCE_NAME
 
 # Get Backend URL
