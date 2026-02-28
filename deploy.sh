@@ -15,15 +15,16 @@ ENVIRONMENT="${ENVIRONMENT:-test}"
 if [ "$ENVIRONMENT" = "production" ]; then
     DB_NAME="vibe_coding"
     SERVICE_SUFFIX=""
+    GCS_BUCKET_NAME="${PROJECT_ID}-prod-uploads"
 else
     DB_NAME="vibe_coding_test"
     SERVICE_SUFFIX="-test"
+    GCS_BUCKET_NAME="${PROJECT_ID}-uploads"
 fi
 
 DB_USER="root"
 BE_SERVICE_NAME="be-api${SERVICE_SUFFIX}"
 FE_SERVICE_NAME="fe-web${SERVICE_SUFFIX}"
-GCS_BUCKET_NAME="${PROJECT_ID}-uploads"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -139,7 +140,7 @@ echo -e "${GREEN}Backend deployed at: $BACKEND_URL${NC}"
 # 5. Deploy Frontend
 echo -e "${YELLOW}Building and Deploying Frontend Web App...${NC}"
 echo "VITE_API_URL=$BACKEND_URL/api/v1" > ./fe-web/.env.production
-echo "VITE_IMG_BASE_URL=https://wispy-water-7e2a.cfst906609.workers.dev" >> ./fe-web/.env.production
+echo "VITE_IMG_BASE_URL=$BACKEND_URL" >> ./fe-web/.env.production
 
 gcloud builds submit ./fe-web \
     --tag $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/${FE_SERVICE_NAME}:latest
